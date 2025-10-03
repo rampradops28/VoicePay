@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
-import { Pencil, Trash2, MessageSquare, Edit } from 'lucide-react';
+import { Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Bill } from '@/lib/types';
 
@@ -60,10 +60,10 @@ export default function HistoryPage() {
     if (!selectedBill) return;
 
     const itemsText = selectedBill.items
-      .map(item => `${item.name} (${item.quantity}${item.unit}) - ₹${item.lineTotal.toFixed(2)}`)
+      .map(item => `${item.name} (${item.quantity}${item.unit}) - ₹${(item.lineTotal || 0).toFixed(2)}`)
       .join('\n');
     
-    const billText = `Bill from ${selectedBill.shopName}:\n${itemsText}\n\nTotal: ₹${selectedBill.totalAmount.toFixed(2)}`;
+    const billText = `Bill from ${selectedBill.shopName}:\n${itemsText}\n\nTotal: ₹${(selectedBill.totalAmount || 0).toFixed(2)}`;
 
     const encodedText = encodeURIComponent(billText);
     const smsUri = `sms:${phoneNumber}?body=${encodedText}`;
@@ -115,7 +115,7 @@ export default function HistoryPage() {
                         <div className="text-left">
                           <span>Bill from {format(new Date(bill.createdAt), 'PPpp')}</span>
                         </div>
-                        <span className="font-semibold text-primary">₹{bill.totalAmount.toFixed(2)}</span>
+                        <span className="font-semibold text-primary">₹{(bill.totalAmount || 0).toFixed(2)}</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -153,15 +153,15 @@ export default function HistoryPage() {
                                <TableRow key={item.id}>
                                  <TableCell className="font-medium">{item.name}</TableCell>
                                  <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
-                                 <TableCell className="text-right">₹{item.unitPrice.toFixed(2)}</TableCell>
-                                 <TableCell className="text-right">₹{item.lineTotal.toFixed(2)}</TableCell>
+                                 <TableCell className="text-right">₹{(item.unitPrice || 0).toFixed(2)}</TableCell>
+                                 <TableCell className="text-right">₹{(item.lineTotal || 0).toFixed(2)}</TableCell>
                                </TableRow>
                              ))}
                            </TableBody>
                            <TableFooter>
                             <TableRow>
                                 <TableCell colSpan={3} className="text-right font-bold text-lg">Grand Total</TableCell>
-                                <TableCell className="text-right font-bold text-lg">₹{bill.totalAmount.toFixed(2)}</TableCell>
+                                <TableCell className="text-right font-bold text-lg">₹{(bill.totalAmount || 0).toFixed(2)}</TableCell>
                             </TableRow>
                            </TableFooter>
                          </Table>
