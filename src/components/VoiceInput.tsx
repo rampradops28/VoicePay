@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useCallback, FormEvent, useEffect, useRef } from 'react';
@@ -68,11 +69,17 @@ export default function VoiceInput() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ partialCommand }),
       });
-      if (!response.ok) throw new Error('Failed to fetch suggestions');
+      if (!response.ok) {
+        // Even if the response is not OK, we don't want to crash.
+        // We will just clear suggestions and log the error.
+        console.error('Failed to fetch suggestions, response not ok.');
+        setSuggestions([]);
+        return;
+      }
       const data = await response.json();
       setSuggestions(data.suggestions || []);
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching or parsing suggestions:', error);
       setSuggestions([]);
     } finally {
       setIsLoadingSuggestions(false);
@@ -320,5 +327,3 @@ export default function VoiceInput() {
     </Card>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { voiceCommandSuggestions } from '@/ai/flows/voice-command-suggestions';
 
@@ -23,13 +24,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(result);
     }
     
-    // If result is not as expected, return empty suggestions
+    // If result is not as expected for any reason, return empty suggestions
     return NextResponse.json({ suggestions: [] });
 
   } catch (error) {
     console.error('Error in suggestion flow:', error);
     // Don't expose internal errors to the client.
-    // Return a generic error or an empty suggestions array.
+    // Return a generic error or an empty suggestions array to prevent crashes.
     return NextResponse.json(
       { suggestions: [], error: 'An error occurred while fetching suggestions.' },
       { status: 500 }
