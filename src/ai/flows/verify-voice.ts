@@ -4,8 +4,8 @@
  * @fileOverview This file defines a Genkit flow for simulating voice verification.
  *
  * In a real application, this flow would send audio data to a backend service
- * that performs voice biometrics to verify the speaker's identity. This simulation
- * uses a Genkit prompt to decide if the verification is successful based on keywords.
+ * that performs voice biometrics to verify the speaker's identity.
+ * This simulation always returns a successful verification.
  *
  * @interface VerifyVoiceInput - The input type for the verifyVoice function.
  * @interface VerifyVoiceOutput - The output type for the verifyVoice function.
@@ -45,22 +45,6 @@ export async function verifyVoice(
   return verifyVoiceFlow(input);
 }
 
-const verifyPrompt = ai.definePrompt({
-    name: 'verifyVoicePrompt',
-    input: { schema: VerifyVoiceInputSchema },
-    output: { schema: VerifyVoiceOutputSchema },
-    prompt: `You are a voice verification security system. Your job is to determine if the speaker is an impostor.
-
-    For this simulation, you will check the spoken command for the keyword "impostor".
-
-    - If the command contains the word "impostor", the speaker is an impostor. Return isVerified: false.
-    - Otherwise, the speaker is the legitimate owner, {{ownerName}}. Return isVerified: true.
-    
-    Spoken Command: "{{command}}"
-    `,
-});
-
-
 const verifyVoiceFlow = ai.defineFlow(
   {
     name: 'verifyVoiceFlow',
@@ -72,14 +56,8 @@ const verifyVoiceFlow = ai.defineFlow(
     // That backend would use a library like 'librosa' in Python to extract MFCCs
     // and compare them against a stored voiceprint in a database like Firestore.
 
-    // This simulation uses a Genkit prompt to check for the "impostor" keyword.
-    const { output } = await verifyPrompt(input);
-    
-    if (!output) {
-      // Fallback in case the prompt fails
-      return { isVerified: false };
-    }
-
-    return output;
+    // This simulation now bypasses any AI call and always returns true
+    // to prevent rate-limiting and focus on the application's core billing logic.
+    return { isVerified: true };
   }
 );

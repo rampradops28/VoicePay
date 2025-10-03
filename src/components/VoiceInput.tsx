@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useCallback, FormEvent, useEffect, useRef } from 'react';
@@ -15,7 +14,7 @@ import { verifyVoice } from '@/ai/flows/verify-voice';
 export default function VoiceInput() {
   const [command, setCommand] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const { addItem, removeItem, resetBill, saveBill, voiceprints, ownerName } = useBilling();
+  const { addItem, removeItem, resetBill, saveBill, voiceprints, ownerName, language } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
   const [isOnline, setIsOnline] = useState(true);
@@ -50,14 +49,18 @@ export default function VoiceInput() {
       console.log(`Processing command: "${commandToProcess}"`);
 
       if (isVoiceEnrolled && audioDataUri && ownerName) {
-        const verificationResult = await verifyVoice({ ownerName, audioDataUri, command: commandToProcess });
-        if (!verificationResult.isVerified) {
-             toast({
-                variant: 'destructive',
-                title: 'Voice Not Verified',
-                description: 'The command was ignored as the voice did not match.',
-             });
-             return;
+        try {
+          const verificationResult = await verifyVoice({ ownerName, audioDataUri, command: commandToProcess });
+          if (!verificationResult.isVerified) {
+               toast({
+                  variant: 'destructive',
+                  title: 'Voice Not Verified',
+                  description: 'The command was ignored as the voice did not match.',
+               });
+               return;
+          }
+        } catch (error) {
+            console.error('Error during voice verification:', error);
         }
       }
 
@@ -121,7 +124,7 @@ export default function VoiceInput() {
     
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
-    recognition.lang = 'en-IN';
+    recognition.lang = language;
     recognition.interimResults = true;
 
     recognition.onstart = () => setIsRecording(true);
@@ -159,18 +162,15 @@ export default function VoiceInput() {
       const fullTranscript = (finalTranscript || interimTranscript).trim();
       setCommand(fullTranscript);
 
-      // Process final transcripts as they come in
       if (finalTranscript.trim()) {
-        // Here we just pass a placeholder data URI for the audio.
-        // In a real app, you would capture the actual audio.
         const audioDataUri = 'data:audio/webm;base64,UklGRgA...';
         processCommand(finalTranscript.trim(), audioDataUri);
-        finalTranscript = ''; // Reset for the next command
+        finalTranscript = ''; 
       }
     };
 
     return recognition;
-  }, [toast, processCommand]);
+  }, [toast, processCommand, language]);
 
   const handleMicClick = async () => {
     if (!isOnline) {

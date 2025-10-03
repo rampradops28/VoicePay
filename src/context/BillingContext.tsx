@@ -4,12 +4,15 @@ import { createContext, useContext, useReducer, ReactNode, useEffect, useCallbac
 import { BillItem, Bill } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
+type Language = 'en-IN' | 'ta-IN';
+
 interface BillingState {
   ownerName: string;
   items: BillItem[];
   history: Bill[];
   totalAmount: number;
   voiceprints: { [key: string]: boolean };
+  language: Language;
 }
 
 type Action =
@@ -22,7 +25,8 @@ type Action =
   | { type: 'HYDRATE_STATE'; payload: Partial<BillingState> }
   | { type: 'CALCULATE_TOTAL' }
   | { type: 'ENROLL_VOICE'; payload: string }
-  | { type: 'REMOVE_VOICEPRINT'; payload: string };
+  | { type: 'REMOVE_VOICEPRINT'; payload: string }
+  | { type: 'SET_LANGUAGE', payload: Language };
 
 const initialState: BillingState = {
   ownerName: '',
@@ -30,12 +34,15 @@ const initialState: BillingState = {
   history: [],
   totalAmount: 0,
   voiceprints: {},
+  language: 'en-IN',
 };
 
 const billingReducer = (state: BillingState, action: Action): BillingState => {
   switch (action.type) {
     case 'SET_OWNER_NAME':
       return { ...state, ownerName: action.payload };
+    case 'SET_LANGUAGE':
+      return { ...state, language: action.payload };
     case 'ENROLL_VOICE': {
         const newVoiceprints = { ...state.voiceprints, [action.payload]: true };
         return { ...state, voiceprints: newVoiceprints };
@@ -119,7 +126,6 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
           ...item,
           lineTotal: parseFloat(((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2))
         })),
-        // Ensure totalAmount is a number
         totalAmount: typeof bill.totalAmount === 'number' ? bill.totalAmount : 0
       })) || [];
       
@@ -128,7 +134,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         ownerName: payload.ownerName || '',
         history: hydratedHistory,
         voiceprints: payload.voiceprints || {},
-        // Don't hydrate current bill, start fresh
+        language: payload.language || 'en-IN',
         items: [],
         totalAmount: 0,
       };
@@ -152,6 +158,7 @@ interface BillingContextType extends BillingState {
   deleteBill: (billId: string) => void;
   enrollVoice: (ownerName: string) => void;
   removeVoiceprint: (ownerName: string) => void;
+  setLanguage: (language: Language) => void;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -161,7 +168,6 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Effect to load state from localStorage on initial render
   useEffect(() => {
     setIsLoading(true);
     try {
@@ -176,22 +182,21 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Effect to save state to localStorage whenever it changes
   useEffect(() => {
-    // Only save when not loading to avoid writing initial state over hydrated state
     if (!isLoading) {
       try {
         const stateToStore = {
           ownerName: state.ownerName,
           history: state.history,
           voiceprints: state.voiceprints,
+          language: state.language,
         };
         localStorage.setItem('billingState', JSON.stringify(stateToStore));
       } catch (error) {
         console.error('Failed to save state to localStorage', error);
       }
     }
-  }, [state.ownerName, state.history, state.voiceprints, isLoading]);
+  }, [state.ownerName, state.history, state.voiceprints, state.language, isLoading]);
 
   const setOwnerName = (name: string) => {
     dispatch({ type: 'SET_OWNER_NAME', payload: name });
@@ -204,6 +209,14 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   const removeVoiceprint = (ownerName: string) => {
     dispatch({ type: 'REMOVE_VOICEPRINT', payload: ownerName });
+  };
+
+  const setLanguage = (language: Language) => {
+    dispatch({ type: 'SET_LANGUAGE', payload: language });
+    toast({
+        title: 'Language Updated',
+        description: `Voice recognition language set to ${language === 'ta-IN' ? 'Tamil' : 'English'}.`,
+    });
   };
 
   const addItem = (item: Omit<BillItem, 'id' | 'lineTotal'>) => {
@@ -286,6 +299,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
       deleteBill,
       enrollVoice,
       removeVoiceprint,
+      setLanguage,
   };
 
   return (
