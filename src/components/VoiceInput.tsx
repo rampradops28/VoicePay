@@ -4,11 +4,12 @@ import { useState, useCallback, FormEvent, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Mic, Loader2, Wand2, ShieldOff, WifiOff } from 'lucide-react';
+import { Mic, WifiOff } from 'lucide-react';
 import { useBilling } from '@/context/BillingContext';
 import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Wand2, Loader2 } from 'lucide-react';
 
 // Debounce function
 const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
@@ -36,7 +37,7 @@ export default function VoiceInput() {
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-    
+
     if (typeof window !== 'undefined') {
       setIsOnline(navigator.onLine);
       window.addEventListener('online', handleOnline);
@@ -81,71 +82,66 @@ export default function VoiceInput() {
     setCommand(value);
     debouncedFetchSuggestions(value);
   };
-  
-  const processCommand = useCallback((cmd: string) => {
-    const commandToProcess = cmd.trim();
-    if (!commandToProcess) return;
 
-    console.log(`Processing command: "${commandToProcess}"`);
+  const processCommand = useCallback(
+    (cmd: string) => {
+      const commandToProcess = cmd.trim();
+      if (!commandToProcess) return;
 
-    // SIMULATE VOICE CHECK
-    // In a real app, a voice biometric service would run here.
-    // We simulate an invalid voice if the command includes "impostor".
-    if (isVoiceEnrolled && commandToProcess.toLowerCase().includes('impostor')) {
+      console.log(`Processing command: "${commandToProcess}"`);
+
+      if (isVoiceEnrolled && commandToProcess.toLowerCase().includes('impostor')) {
         toast({
-            variant: 'destructive',
-            title: 'Invalid Voice Detected',
-            description: 'This command was ignored as the voice did not match.',
+          variant: 'destructive',
+          title: 'Invalid Voice Detected',
+          description: 'This command was ignored as the voice did not match.',
         });
-        setCommand(''); // Clear the invalid command
+        setCommand('');
         setSuggestions([]);
         return;
-    }
+      }
 
+      const parsed = parseCommand(commandToProcess);
 
-    const parsed = parseCommand(commandToProcess);
-
-    if (!parsed) {
+      if (!parsed) {
         toast({
-            variant: 'destructive',
-            title: 'Invalid Command',
-            description: `Could not understand "${commandToProcess}". Please try again.`,
+          variant: 'destructive',
+          title: 'Invalid Command',
+          description: `Could not understand "${commandToProcess}". Please try again.`,
         });
         return;
-    }
+      }
 
-    switch (parsed.action) {
+      switch (parsed.action) {
         case 'add':
-            addItem({
-                name: parsed.payload.item,
-                quantity: parsed.payload.quantity,
-                unit: parsed.payload.unit,
-                unitPrice: parsed.payload.price,
-            });
-            break;
+          addItem({
+            name: parsed.payload.item,
+            quantity: parsed.payload.quantity,
+            unit: parsed.payload.unit,
+            unitPrice: parsed.payload.price,
+          });
+          break;
         case 'remove':
-            removeItem(parsed.payload.item);
-            break;
+          removeItem(parsed.payload.item);
+          break;
         case 'reset':
-            resetBill();
-            break;
+          resetBill();
+          break;
         case 'save':
-            saveBill();
-            break;
+          saveBill();
+          break;
         case 'calculate':
-            // In the future, this could just show the total without saving.
-            // For now, we can have it toast the total.
-            toast({
-              title: 'Action Required',
-              description: 'Please use the "Save Bill" button or command to save the bill.',
-            });
-            break;
-    }
-    // Clear input after processing
-    setCommand('');
-    setSuggestions([]);
-  }, [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled]);
-
+          toast({
+            title: 'Action Required',
+            description: 'Please use the "Save Bill" button or command to save the bill.',
+          });
+          break;
+      }
+      setCommand('');
+      setSuggestions([]);
+    },
+    [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled]
+  );
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -153,95 +149,79 @@ export default function VoiceInput() {
       processCommand(command);
     }
   };
-
-  useEffect(() => {
+  
+  const setupRecognition = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true; // Stay on until manually stopped
-      recognition.lang = 'en-IN';
-      recognition.interimResults = true;
-
-      recognition.onstart = () => setIsRecording(true);
-      
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.log('Speech recognition error', event.error);
-        if (event.error !== 'aborted' && event.error !== 'no-speech') {
-          toast({ variant: 'destructive', title: 'Voice Error', description: `An error occurred: ${event.error}` });
-        }
-        setIsRecording(false);
-      };
-      
-      let finalTranscript = '';
-      recognition.onresult = (event: any) => {
-        let interimTranscript = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript + ' ';
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-        
-        setCommand(finalTranscript.trim() || interimTranscript);
-
-        // Process final transcripts as they come in
-        if (finalTranscript.trim()) {
-            const commands = finalTranscript.trim().split(/(?=add|remove|reset|calculate|kanak|total|clear bill|save bill|impostor)/i).filter(c => c.trim());
-            commands.forEach(cmd => processCommand(cmd));
-            finalTranscript = ''; // Clear buffer after processing
-        }
-      };
-      recognitionRef.current = recognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Not Supported', description: 'Voice recognition is not supported in your browser.' });
+      return null;
     }
-  }, [toast, processCommand]);
+    
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false; // Process single utterances
+    recognition.lang = 'en-IN';
+    recognition.interimResults = true;
+
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onend = () => setIsRecording(false);
+    
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error', event.error);
+      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        toast({ variant: 'destructive', title: 'Voice Error', description: `An error occurred: ${event.error}` });
+      }
+      setIsRecording(false);
+    };
+
+    let finalTranscript = '';
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      setCommand(finalTranscript.trim() || interimTranscript);
+      
+      if (finalTranscript.trim()) {
+        processCommand(finalTranscript.trim());
+      }
+    };
+
+    return recognition;
+  }, [processCommand, toast]);
 
   const handleMicClick = async () => {
     if (!isOnline) {
-      toast({
-        variant: 'destructive',
-        title: 'Offline Mode',
-        description: 'An internet connection is required to use voice commands.',
-      });
-      return;
-    }
-
-    if (!recognitionRef.current) {
-      toast({ variant: 'destructive', title: 'Not Supported', description: 'Voice recognition is not supported in your browser.' });
+      toast({ variant: 'destructive', title: 'Offline Mode', description: 'An internet connection is required for voice commands.' });
       return;
     }
 
     if (!isVoiceEnrolled) {
-        toast({
-            variant: 'destructive',
-            title: 'Voice Not Enrolled',
-            description: 'Please enroll your voice from the login screen to use voice commands.',
-        });
-        return;
-    }
-
-    if (isRecording) {
-      recognitionRef.current.stop();
+      toast({ variant: 'destructive', title: 'Voice Not Enrolled', description: 'Please enroll your voice from the login screen to use voice commands.' });
       return;
     }
 
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
+    
     try {
-      // Explicitly request microphone permission on click
+      // 1. Request microphone permission
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // We can immediately stop the tracks as we only needed to trigger the permission prompt.
-      // The Web Speech API handles the microphone stream itself.
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => track.stop()); // We only needed permission, not the stream itself
 
-      // Now that we have permission, start recognition.
-      setCommand('');
-      setSuggestions([]);
-      recognitionRef.current.start();
-      
+      // 2. Only now, create and start the recognition instance
+      const recognition = setupRecognition();
+      if (recognition) {
+        recognitionRef.current = recognition;
+        setCommand('');
+        setSuggestions([]);
+        recognition.start();
+      }
     } catch (err) {
       console.error("Microphone permission error:", err);
       toast({
@@ -251,7 +231,6 @@ export default function VoiceInput() {
       });
     }
   };
-
 
   return (
     <Card className="no-print">
