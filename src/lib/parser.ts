@@ -114,13 +114,15 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     const itemName = stripArticle(rawItemName);
 
     if (itemName && quantity !== null && price !== null) {
+      // The price parsed is the total price for the quantity, so we calculate the unit price
+      const unitPrice = price / quantity;
       return {
         action: 'add',
         payload: {
           item: itemName,
           quantity: quantity,
           unit: unit || 'pcs', // Default to 'pcs' if no unit was parsed
-          price: price, // The price is the unit price
+          price: unitPrice,
         },
       };
     }

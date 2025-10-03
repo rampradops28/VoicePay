@@ -54,6 +54,7 @@ const prompt = ai.definePrompt({
   - Removing items: "remove <item>"
   - Calculating total: "calculate total" or "kanak"
   - Resetting bill: "reset bill"
+  - Saving the bill: "save bill"
 
   Given the following partial command, suggest up to 5 valid commands that the user might want to use.
 
