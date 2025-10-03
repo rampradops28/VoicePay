@@ -38,7 +38,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     }
     case 'REMOVE_ITEM': {
       const itemNameLower = action.payload.toLowerCase();
-      const newItems = state.items.filter(item => item.name.toLowerCase() !== itemNameLower);
+      const newItems = state.items.filter(item => item.name && item.name.toLowerCase() !== itemNameLower);
       return { ...state, items: newItems };
     }
     case 'RESET_BILL':
@@ -115,7 +115,8 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeItem = (itemName: string) => {
-    const itemExists = state.items.some(i => i.name.toLowerCase() === itemName.toLowerCase());
+    if (!itemName) return;
+    const itemExists = state.items.some(i => i.name && i.name.toLowerCase() === itemName.toLowerCase());
     if (itemExists) {
         dispatch({ type: 'REMOVE_ITEM', payload: itemName });
         toast({
