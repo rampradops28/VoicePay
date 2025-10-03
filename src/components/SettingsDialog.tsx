@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
 type SettingsDialogProps = {
   isOpen: boolean;
@@ -19,7 +21,7 @@ type SettingsDialogProps = {
 };
 
 export function SettingsDialog({ isOpen, onOpenChange }: SettingsDialogProps) {
-  const { language, setLanguage } = useBilling();
+  const { language, setLanguage, isSpeechEnabled, setSpeechEnabled } = useBilling();
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -30,8 +32,8 @@ export function SettingsDialog({ isOpen, onOpenChange }: SettingsDialogProps) {
             Adjust your preferences for the application.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-            <div className="space-y-2">
+        <div className="space-y-6 py-4">
+            <div className="space-y-4">
                 <Label>Voice Command Language</Label>
                 <RadioGroup 
                     defaultValue={language} 
@@ -47,7 +49,22 @@ export function SettingsDialog({ isOpen, onOpenChange }: SettingsDialogProps) {
                     </div>
                 </RadioGroup>
                 <p className="text-xs text-muted-foreground pt-2">
-                    Select the language you will use for voice commands. "Mixed" language is not yet supported.
+                    Select the language you will use for voice commands.
+                </p>
+            </div>
+            <Separator />
+            <div className="space-y-4">
+                <Label>Audio Feedback</Label>
+                 <div className="flex items-center space-x-2">
+                    <Switch
+                        id="speech-toggle"
+                        checked={isSpeechEnabled}
+                        onCheckedChange={setSpeechEnabled}
+                    />
+                    <Label htmlFor="speech-toggle">Enable Voice Synthesis</Label>
+                </div>
+                <p className="text-xs text-muted-foreground pt-2">
+                    Get spoken confirmation when you add or remove items.
                 </p>
             </div>
         </div>

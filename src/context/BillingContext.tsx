@@ -20,6 +20,7 @@ interface BillingState {
   voiceprints: { [key: string]: boolean };
   language: Language;
   audio: AudioState | null;
+  isSpeechEnabled: boolean;
 }
 
 type Action =
@@ -34,6 +35,7 @@ type Action =
   | { type: 'ENROLL_VOICE'; payload: string }
   | { type: 'REMOVE_VOICEPRINT'; payload: string }
   | { type: 'SET_LANGUAGE', payload: Language }
+  | { type: 'SET_SPEECH_ENABLED', payload: boolean }
   | { type: 'SET_AUDIO', payload: AudioState }
   | { type: 'CLEAR_AUDIO' };
 
@@ -45,6 +47,7 @@ const initialState: BillingState = {
   voiceprints: {},
   language: 'en-IN',
   audio: null,
+  isSpeechEnabled: true,
 };
 
 const billingReducer = (state: BillingState, action: Action): BillingState => {
@@ -53,6 +56,8 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, ownerName: action.payload };
     case 'SET_LANGUAGE':
       return { ...state, language: action.payload };
+    case 'SET_SPEECH_ENABLED':
+      return { ...state, isSpeechEnabled: action.payload };
     case 'SET_AUDIO':
       return { ...state, audio: action.payload };
     case 'CLEAR_AUDIO':
@@ -145,6 +150,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         history: hydratedHistory,
         voiceprints: payload.voiceprints || {},
         language: payload.language || 'en-IN',
+        isSpeechEnabled: payload.isSpeechEnabled !== false, // default to true
         items: [],
         totalAmount: 0,
       };
@@ -169,6 +175,7 @@ interface BillingContextType extends BillingState {
   enrollVoice: (ownerName: string) => void;
   removeVoiceprint: (ownerName: string) => void;
   setLanguage: (language: Language) => void;
+  setSpeechEnabled: (enabled: boolean) => void;
   speak: (text: string) => void;
   clearAudio: () => void;
 }
@@ -202,22 +209,24 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
           history: state.history,
           voiceprints: state.voiceprints,
           language: state.language,
+          isSpeechEnabled: state.isSpeechEnabled,
         };
         localStorage.setItem('billingState', JSON.stringify(stateToStore));
       } catch (error) {
         console.error('Failed to save state to localStorage', error);
       }
     }
-  }, [state.ownerName, state.history, state.voiceprints, state.language, isLoading]);
+  }, [state.ownerName, state.history, state.voiceprints, state.language, state.isSpeechEnabled, isLoading]);
 
   const speak = useCallback(async (text: string) => {
+    if (!state.isSpeechEnabled) return;
     try {
       const { audioDataUri } = await textToSpeech(text);
       dispatch({ type: 'SET_AUDIO', payload: { src: audioDataUri, id: Date.now() } });
     } catch (error) {
       console.error("Failed to synthesize speech:", error);
     }
-  }, []);
+  }, [state.isSpeechEnabled]);
 
   const clearAudio = () => {
     dispatch({ type: 'CLEAR_AUDIO' });
@@ -241,6 +250,14 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     toast({
         title: 'Language Updated',
         description: `Voice recognition language set to ${language === 'ta-IN' ? 'Tamil' : 'English'}.`,
+    });
+  };
+
+  const setSpeechEnabled = (enabled: boolean) => {
+    dispatch({ type: 'SET_SPEECH_ENABLED', payload: enabled });
+     toast({
+        title: 'Audio Feedback Updated',
+        description: `Spoken confirmations have been ${enabled ? 'enabled' : 'disabled'}.`,
     });
   };
 
@@ -331,6 +348,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
       enrollVoice,
       removeVoiceprint,
       setLanguage,
+      setSpeechEnabled,
       speak,
       clearAudio,
   };
