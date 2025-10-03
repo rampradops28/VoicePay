@@ -180,7 +180,7 @@ export default function VoiceInput() {
     }
     
     const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Stop after a pause
+    recognition.continuous = true; // Keep listening
     recognition.lang = 'en-IN';
     recognition.interimResults = true;
 
@@ -196,6 +196,7 @@ export default function VoiceInput() {
     
     recognition.onend = () => {
         setIsRecording(false);
+        recognitionRef.current = null;
     };
 
     let finalTranscript = '';
@@ -208,12 +209,15 @@ export default function VoiceInput() {
           interimTranscript += event.results[i][0].transcript;
         }
       }
+      
       const fullTranscript = (finalTranscript || interimTranscript).trim();
       setCommand(fullTranscript);
 
-      if (event.results[event.results.length - 1].isFinal) {
-        // Here you could capture audio chunk if you were to implement real voice verification
-        processCommand(fullTranscript);
+      // Process final transcripts as they come in
+      if (finalTranscript.trim()) {
+        processCommand(finalTranscript.trim());
+        finalTranscript = ''; // Reset for the next command
+        setCommand(''); // Clear the input box
       }
     };
 
@@ -265,7 +269,7 @@ export default function VoiceInput() {
         </CardTitle>
         <CardDescription>
           {isVoiceEnrolled
-            ? "Tap the mic to speak. Voice commands require an internet connection."
+            ? "Tap the mic to start/stop speaking. Voice commands require an internet connection."
             : "Please enroll your voice on the login page to enable this feature."
           }
         </CardDescription>
