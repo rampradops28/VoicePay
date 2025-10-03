@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import VoiceInput from '@/components/VoiceInput';
 import BillingTable from '@/components/BillingTable';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, MessageSquareText } from 'lucide-react';
+import { RotateCcw, MessageSquareText, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 
 export default function BillingPage() {
   const router = useRouter();
-  const { shopName, resetBill, items, totalAmount } = useBilling();
+  const { shopName, resetBill, items, totalAmount, saveBill } = useBilling();
   const { toast } = useToast();
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -88,6 +88,9 @@ export default function BillingPage() {
               <div className="flex items-center justify-end gap-2 mt-4 no-print">
                 <Button variant="outline" onClick={resetBill}>
                   <RotateCcw className="mr-2 h-4 w-4" /> Reset Bill
+                </Button>
+                 <Button variant="outline" onClick={saveBill}>
+                  <Save className="mr-2 h-4 w-4" /> Save Bill
                 </Button>
                 <Button onClick={handleSendSmsClick}>
                   <MessageSquareText className="mr-2 h-4 w-4" /> Send as SMS
