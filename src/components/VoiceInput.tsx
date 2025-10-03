@@ -149,7 +149,7 @@ export default function VoiceInput() {
 
         // Process final transcripts as they come in
         if (finalTranscript.trim()) {
-            const commands = finalTranscript.trim().split(/(?=add|remove|reset|calculate|kanak|total)/i).filter(c => c.trim());
+            const commands = finalTranscript.trim().split(/(?=add|remove|reset|calculate|kanak|total|clear bill|save bill)/i).filter(c => c.trim());
             commands.forEach(cmd => processCommand(cmd));
             finalTranscript = ''; // Clear buffer after processing
         }
@@ -165,6 +165,7 @@ export default function VoiceInput() {
     }
     if (isRecording) {
       recognitionRef.current.stop();
+      setIsRecording(false); // Update UI immediately
     } else {
       setCommand(''); // Clear previous command
       setSuggestions([]);

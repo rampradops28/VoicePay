@@ -59,13 +59,20 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         history: [newBill, ...state.history],
       };
     }
-    case 'HYDRATE_STATE':
-      // Ensure hydrated items have lineTotal calculated
-      const hydratedItems = action.payload.items?.map(item => ({
-        ...item,
-        lineTotal: parseFloat(((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2))
+    case 'HYDRATE_STATE': {
+      const hydratedState = { ...action.payload };
+      // Clear items on hydration/refresh
+      hydratedState.items = [];
+       // Ensure hydrated history items have lineTotal calculated
+      const hydratedHistory = hydratedState.history?.map(bill => ({
+        ...bill,
+        items: bill.items.map(item => ({
+          ...item,
+          lineTotal: parseFloat(((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2))
+        }))
       })) || [];
-      return { ...state, ...action.payload, items: hydratedItems };
+      return { ...state, ...hydratedState, history: hydratedHistory };
+    }
     default:
       return state;
   }
@@ -98,7 +105,12 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('billingState', JSON.stringify(state));
+      // Create a state object for storage without the 'items'
+      const stateToStore = {
+        shopName: state.shopName,
+        history: state.history,
+      };
+      localStorage.setItem('billingState', JSON.stringify(stateToStore));
     } catch (error) {
       console.error('Failed to save state to localStorage', error);
     }
@@ -156,7 +168,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             description: 'Add items before saving.',
         });
     }
-  }, [state.items, toast]);
+  }, [state.items.length, toast]);
 
   return (
     <BillingContext.Provider value={{ ...state, setShopName, addItem, removeItem, resetBill, saveBill }}>
