@@ -17,12 +17,21 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await voiceCommandSuggestions({ partialCommand });
-    return NextResponse.json(result);
+    
+    // Ensure result is in the correct format before sending
+    if (result && Array.isArray(result.suggestions)) {
+      return NextResponse.json(result);
+    }
+    
+    // If result is not as expected, return empty suggestions
+    return NextResponse.json({ suggestions: [] });
+
   } catch (error) {
     console.error('Error in suggestion flow:', error);
-    // Don't expose internal errors to the client
+    // Don't expose internal errors to the client.
+    // Return a generic error or an empty suggestions array.
     return NextResponse.json(
-      { error: 'An error occurred while fetching suggestions.' },
+      { suggestions: [], error: 'An error occurred while fetching suggestions.' },
       { status: 500 }
     );
   }

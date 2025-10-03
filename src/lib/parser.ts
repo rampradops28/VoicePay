@@ -103,13 +103,16 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
         price = parseFloat(priceMatch[1]);
         content = content.replace(priceRegex, '').trim();
       }
-
-      const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?|ml|millilitre|milliliter)\b/i;
+      
+      // Regex to capture a number and an optional following word (as the unit)
+      const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)?\b/i;
       const qtyUnitMatch = content.match(qtyUnitRegex);
       
       if (qtyUnitMatch) {
         quantity = parseFloat(qtyUnitMatch[1]);
-        unit = normalizeUnit(qtyUnitMatch[3]);
+        if (qtyUnitMatch[3]) {
+          unit = normalizeUnit(qtyUnitMatch[3]);
+        }
         content = content.replace(qtyUnitRegex, '').trim();
       }
 
@@ -151,5 +154,3 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
 
   return parsedCommands.length > 0 ? parsedCommands : null;
 };
-
-    
