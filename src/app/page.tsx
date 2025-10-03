@@ -19,10 +19,12 @@ export default function BillingPage() {
   const { toast } = useToast();
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-    if (!isAuthenticated) {
+    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
+    setIsAuthenticated(authStatus);
+    if (!authStatus) {
       router.push('/login');
     }
   }, [router]);
@@ -66,7 +68,7 @@ export default function BillingPage() {
     window.location.href = smsUri;
   };
 
-  if (!shopName) {
+  if (!isAuthenticated || !shopName) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
