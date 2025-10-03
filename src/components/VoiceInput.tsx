@@ -110,8 +110,16 @@ export default function VoiceInput() {
         case 'reset':
             resetBill();
             break;
-        case 'calculate':
+        case 'save':
             saveBill();
+            break;
+        case 'calculate':
+            // In the future, this could just show the total without saving.
+            // For now, we can have it toast the total.
+            toast({
+              title: 'Action Required',
+              description: 'Please use the "Save Bill" button or command to save the bill.',
+            });
             break;
     }
     // Clear input after processing

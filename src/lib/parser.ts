@@ -1,7 +1,7 @@
 export type ParsedCommand =
   | { action: 'add'; payload: { item: string; quantity: number; unit: string; price: number } }
   | { action: 'remove'; payload: { item: string } }
-  | { action: 'calculate' | 'reset'; payload: null };
+  | { action: 'calculate' | 'reset' | 'save'; payload: null };
 
 const unitMap: { [key: string]: string } = {
   kilo: 'kg',
@@ -51,8 +51,13 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     return { action: 'reset', payload: null };
   }
 
-  // Rule: "What's the total?" or "save bill" or "kanak"
-  if (cmd.includes('total') || cmd.includes('save bill') || cmd.includes('kanak')) {
+  // Rule: "save bill"
+  if (cmd.includes('save bill')) {
+    return { action: 'save', payload: null };
+  }
+
+  // Rule: "What's the total?" or "kanak"
+  if (cmd.includes('total') || cmd.includes('kanak')) {
     return { action: 'calculate', payload: null };
   }
 
