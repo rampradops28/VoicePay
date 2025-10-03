@@ -33,12 +33,40 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     case 'SET_SHOP_NAME':
       return { ...state, shopName: action.payload };
     case 'ADD_ITEM': {
-      const newItem: BillItem = {
-        ...action.payload,
-        id: new Date().toISOString() + Math.random(),
-        lineTotal: parseFloat((action.payload.quantity * (action.payload.unitPrice || 0)).toFixed(2)),
-      };
-      const newItems = [...state.items, newItem];
+      const { name, quantity, unit, unitPrice } = action.payload;
+      const existingItemIndex = state.items.findIndex(
+        item => item.name.toLowerCase() === name.toLowerCase()
+      );
+
+      let newItems;
+
+      if (existingItemIndex > -1) {
+        // Item exists, update it
+        newItems = state.items.map((item, index) => {
+          if (index === existingItemIndex) {
+            const newQuantity = item.quantity + quantity;
+            return {
+              ...item,
+              quantity: newQuantity,
+              unitPrice: unitPrice, // Update to the latest price
+              lineTotal: parseFloat((newQuantity * unitPrice).toFixed(2)),
+            };
+          }
+          return item;
+        });
+      } else {
+        // Item doesn't exist, add it
+        const newItem: BillItem = {
+          id: new Date().toISOString() + Math.random(),
+          name: name,
+          quantity: quantity,
+          unit: unit,
+          unitPrice: unitPrice,
+          lineTotal: parseFloat((quantity * unitPrice).toFixed(2)),
+        };
+        newItems = [...state.items, newItem];
+      }
+      
       const newTotal = newItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
       return { ...state, items: newItems, totalAmount: newTotal };
     }
@@ -136,11 +164,23 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const setShopName = (name: string) => dispatch({ type: 'SET_SHOP_NAME', payload: name });
   
   const addItem = (item: Omit<BillItem, 'id' | 'lineTotal'>) => {
+    const existingItem = state.items.find(
+      i => i.name.toLowerCase() === item.name.toLowerCase()
+    );
+    
     dispatch({ type: 'ADD_ITEM', payload: item });
-    toast({
-      title: 'Item Added',
-      description: `${item.quantity}${item.unit} ${item.name} for ₹${item.unitPrice}`,
-    });
+    
+    if (existingItem) {
+        toast({
+            title: 'Item Updated',
+            description: `${item.name}'s quantity has been updated.`,
+        });
+    } else {
+        toast({
+            title: 'Item Added',
+            description: `${item.quantity}${item.unit} ${item.name} for ₹${item.unitPrice}`,
+        });
+    }
   };
 
   const removeItem = (itemName: string) => {
