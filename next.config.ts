@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  compiler: {
+    fastRefresh: false,
+  },
 };
 
 export default nextConfig;
