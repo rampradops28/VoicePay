@@ -178,7 +178,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     } else {
         toast({
             title: 'Item Added',
-            description: `${item.quantity}${item.unit} ${item.name} for ₹${item.unitPrice}`,
+            description: `${item.quantity}${item.unit} ${item.name} for ₹${item.unitPrice.toFixed(2)} per ${item.unit}`,
         });
     }
   };

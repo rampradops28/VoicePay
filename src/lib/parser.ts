@@ -60,8 +60,8 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     let quantity: number | null = null;
     let unit: string = '';
 
-    // Regex for price: (rs 50) or (50 rs) or (50rs)
-    const priceRegex = /(?:rs\s*(\d+(\.\d+)?)|(\d+(\.\d+)?)\s*rs)/i;
+    // Regex for price: (rs 50) or (50 rs) or (50rs) or (50 rupees)
+    const priceRegex = /(?:rs|rupees)\s*(\d+(\.\d+)?)|(\d+(\.\d+)?)\s*(?:rs|rupees)/i;
     const priceMatch = content.match(priceRegex);
 
     if (priceMatch) {
@@ -80,7 +80,6 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     }
 
     // If quantity is still null, look for a number that could be quantity or price
-    // This handles cases where unit is missing, or the order is swapped.
     const numberRegex = /(\d+(\.\d+)?)/;
     const numberMatches = content.match(new RegExp(numberRegex, 'g')) || [];
 
@@ -121,7 +120,7 @@ export const parseCommand = (command: string): ParsedCommand | null => {
           item: itemName,
           quantity: quantity,
           unit: unit || 'pcs', // Default to 'pcs' if no unit was parsed
-          price: price,
+          price: price / quantity, // Calculate unit price from total price
         },
       };
     }
