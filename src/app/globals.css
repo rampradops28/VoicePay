@@ -60,7 +60,6 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    background-image: linear-gradient(to right top, #24303e, #2b4c66, #2d6b91, #258dbd, #00b1eb);
   }
 }
 
