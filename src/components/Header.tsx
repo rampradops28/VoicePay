@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { useBilling } from '@/context/BillingContext';
 import { useState, useEffect } from 'react';
 import { Download, Menu } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 export default function Header() {
   const router = useRouter();
@@ -102,6 +102,10 @@ export default function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left">
+                 <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                 <SheetDescription className="sr-only">
+                    Primary navigation links for the application.
+                 </SheetDescription>
                  <div className="p-4">
                     <Link href="/" className="flex items-center space-x-2 mb-8" onClick={() => setIsMobileMenuOpen(false)}>
                         <span className="font-bold font-headline text-lg text-primary">Tamil VoicePay</span>
