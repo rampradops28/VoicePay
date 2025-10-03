@@ -7,12 +7,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useBilling } from '@/context/BillingContext';
-import { Store } from 'lucide-react';
+import { Store, Mic, Fingerprint } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function LoginPage() {
   const [shopNameInput, setShopNameInput] = useState('');
   const router = useRouter();
   const { setShopName } = useBilling();
+  const { toast } = useToast();
+  const [isRecording, setIsRecording] = useState(false);
+
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -28,40 +35,91 @@ export default function LoginPage() {
       router.push('/');
     }
   };
+  
+  const handleVoiceEnrollment = () => {
+    setIsRecording(true);
+    toast({
+        title: "Voice Enrollment Started",
+        description: "This is a concept demonstration. In a real app, you would record your voice now to create a secure voiceprint.",
+    });
+
+    // Simulate a recording process
+    setTimeout(() => {
+        setIsRecording(false);
+        toast({
+            title: "Voiceprint Created (Simulated)",
+            description: "You can now proceed to log in. The app will be ready for voice authentication.",
+        });
+    }, 4000);
+  };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
             <Store className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="font-headline text-2xl">Welcome to Tamil VoicePay</CardTitle>
-          <CardDescription>Enter your shop name to start billing.</CardDescription>
+          <CardDescription>Your offline-first billing assistant.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="shopName">Shop Name</Label>
-              <Input
-                id="shopName"
-                placeholder="e.g., Annachi Kadai"
-                value={shopNameInput}
-                onChange={(e) => setShopNameInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              />
-            </div>
-          </div>
+          <Tabs defaultValue="shopName" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="shopName">Shop Name</TabsTrigger>
+              <TabsTrigger value="voice">Voice Sign-In</TabsTrigger>
+            </TabsList>
+            <TabsContent value="shopName" className="mt-4">
+                <CardDescription className="text-center mb-4">
+                    Enter your shop name to start billing.
+                </CardDescription>
+                <div className="grid w-full items-center gap-4">
+                    <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="shopName">Shop Name</Label>
+                    <Input
+                        id="shopName"
+                        placeholder="e.g., Annachi Kadai"
+                        value={shopNameInput}
+                        onChange={(e) => setShopNameInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                    />
+                    </div>
+                </div>
+                 <Button className="w-full mt-4" onClick={handleLogin} disabled={!shopNameInput.trim()}>
+                    Start Billing
+                </Button>
+            </TabsContent>
+            <TabsContent value="voice">
+              <div className="flex flex-col items-center justify-center text-center p-4">
+                <CardDescription className="mb-4">
+                  Enroll your voice to use voice commands securely. Only your voice will be recognized.
+                </CardDescription>
+                <div 
+                    className={cn(
+                        "relative flex items-center justify-center h-32 w-32 rounded-full border-4 border-dashed transition-all",
+                        isRecording ? "border-primary" : "border-muted"
+                    )}
+                >
+                    <Fingerprint className={cn("h-16 w-16 text-muted transition-colors", isRecording && "text-primary")} />
+                    {isRecording && (
+                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"></div>
+                    )}
+                </div>
+                <Button className="w-full mt-6" onClick={handleVoiceEnrollment} disabled={isRecording}>
+                   {isRecording ? 'Recording...' : 'Enroll My Voice'}
+                   {!isRecording && <Mic className="ml-2 h-4 w-4" />}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
-        <CardFooter>
-          <Button className="w-full" onClick={handleLogin} disabled={!shopNameInput.trim()}>
-            Start Billing
-          </Button>
+        <CardFooter className="flex-col">
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Once set up, log in to start billing.
+            </p>
         </CardFooter>
       </Card>
-      <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
-        <p>Your offline-first billing assistant.</p>
-      </footer>
+      
     </main>
   );
 }

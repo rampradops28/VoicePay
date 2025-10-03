@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useBilling } from '@/context/BillingContext';
@@ -99,7 +99,7 @@ export default function HistoryPage() {
     <>
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
+      <main className="flex-grow container mx-auto p-2 sm:p-4 md:p-6 lg:p-8">
         <Tabs defaultValue="history">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="history">Billing History</TabsTrigger>
@@ -131,8 +131,8 @@ export default function HistoryPage() {
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="p-4 border rounded-md bg-background">
-                            <div className="flex justify-between items-center mb-4">
-                                <div>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                                <div className="mb-2 sm:mb-0">
                                     <h3 className="font-headline text-lg font-semibold">{bill.shopName}</h3>
                                     <p className="text-sm text-muted-foreground">
                                     {format(new Date(bill.createdAt), 'MMMM do, yyyy - h:mm a')}
@@ -150,32 +150,34 @@ export default function HistoryPage() {
                                     </Button>
                                 </div>
                             </div>
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Item</TableHead>
-                                  <TableHead className="text-center">Quantity</TableHead>
-                                  <TableHead className="text-right">Unit Price</TableHead>
-                                  <TableHead className="text-right">Total</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {bill.items.map((item) => (
-                                  <TableRow key={item.id}>
-                                    <TableCell className="font-medium">{item.name}</TableCell>
-                                    <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
-                                    <TableCell className="text-right">Rs {(item.unitPrice || 0).toFixed(2)}</TableCell>
-                                    <TableCell className="text-right">Rs {(item.lineTotal || 0).toFixed(2)}</TableCell>
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Item</TableHead>
+                                    <TableHead className="text-center">Quantity</TableHead>
+                                    <TableHead className="text-right">Unit Price</TableHead>
+                                    <TableHead className="text-right">Total</TableHead>
                                   </TableRow>
-                                ))}
-                              </TableBody>
-                              <TableFooter>
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-right font-bold text-lg">Grand Total</TableCell>
-                                    <TableCell className="text-right font-bold text-lg">Rs {(bill.totalAmount || 0).toFixed(2)}</TableCell>
-                                </TableRow>
-                              </TableFooter>
-                            </Table>
+                                </TableHeader>
+                                <TableBody>
+                                  {bill.items.map((item) => (
+                                    <TableRow key={item.id}>
+                                      <TableCell className="font-medium">{item.name}</TableCell>
+                                      <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
+                                      <TableCell className="text-right">Rs {(item.unitPrice || 0).toFixed(2)}</TableCell>
+                                      <TableCell className="text-right">Rs {(item.lineTotal || 0).toFixed(2)}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                                <TableFooter>
+                                  <TableRow>
+                                      <TableCell colSpan={3} className="text-right font-bold text-lg">Grand Total</TableCell>
+                                      <TableCell className="text-right font-bold text-lg">Rs {(bill.totalAmount || 0).toFixed(2)}</TableCell>
+                                  </TableRow>
+                                </TableFooter>
+                              </Table>
+                            </div>
                           </div>
                         </AccordionContent>
                       </AccordionItem>
