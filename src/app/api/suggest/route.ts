@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     // This prevents the client from crashing.
     return NextResponse.json(
       { suggestions: [], error: 'An error occurred while fetching suggestions.' },
-      { status: 500 }
+      { status: 200 } // Return 200 OK even on error to not crash the client fetch.
     );
   }
 }
