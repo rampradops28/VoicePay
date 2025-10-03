@@ -26,14 +26,14 @@ export default function InstallPWA() {
 
   useEffect(() => {
     // Register the service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('Service Worker registered: ', registration);
-        }).catch(registrationError => {
-          console.log('Service Worker registration failed: ', registrationError);
+    if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(registration => {
+                console.log('Service Worker registered: ', registration);
+            }).catch(registrationError => {
+                console.log('Service Worker registration failed: ', registrationError);
+            });
         });
-      });
     }
 
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
