@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import VoiceInput from '@/components/VoiceInput';
 import BillingTable from '@/components/BillingTable';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, MessageSquareText, Save, HelpCircle } from 'lucide-react';
+import { RotateCcw, MessageSquareText, Save, BookText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -88,7 +88,7 @@ export default function BillingPage() {
               <Card className="no-print">
                 <CardHeader>
                   <CardTitle className="font-headline flex items-center gap-2">
-                    <HelpCircle className="text-primary" />
+                    <BookText className="text-primary" />
                     Command Guide
                   </CardTitle>
                   <CardDescription>
