@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { useBilling } from '@/context/BillingContext';
-import { LogOut } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -48,7 +47,6 @@ export default function Header() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           <span className="hidden sm:inline-block text-sm text-muted-foreground">{shopName}</span>
           <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
             Logout
           </Button>
         </div>
