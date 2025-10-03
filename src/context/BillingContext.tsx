@@ -8,6 +8,7 @@ interface BillingState {
   shopName: string;
   items: BillItem[];
   history: Bill[];
+  totalAmount: number;
 }
 
 type Action =
@@ -16,12 +17,14 @@ type Action =
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'RESET_BILL' }
   | { type: 'SAVE_BILL' }
-  | { type: 'HYDRATE_STATE'; payload: Partial<BillingState> };
+  | { type: 'HYDRATE_STATE'; payload: Partial<BillingState> }
+  | { type: 'CALCULATE_TOTAL' };
 
 const initialState: BillingState = {
   shopName: '',
   items: [],
   history: [],
+  totalAmount: 0,
 };
 
 const billingReducer = (state: BillingState, action: Action): BillingState => {
@@ -31,38 +34,42 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     case 'ADD_ITEM': {
       const newItem: BillItem = {
         ...action.payload,
-        id: new Date().toISOString() + Math.random(), // Add random number to ensure unique id
+        id: new Date().toISOString() + Math.random(),
         lineTotal: parseFloat((action.payload.quantity * (action.payload.unitPrice || 0)).toFixed(2)),
       };
-      return { ...state, items: [...state.items, newItem] };
+      const newItems = [...state.items, newItem];
+      const newTotal = newItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
+      return { ...state, items: newItems, totalAmount: newTotal };
     }
     case 'REMOVE_ITEM': {
       const itemNameLower = action.payload.toLowerCase();
       const newItems = state.items.filter(item => item.name && item.name.toLowerCase() !== itemNameLower);
-      return { ...state, items: newItems };
+      const newTotal = newItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
+      return { ...state, items: newItems, totalAmount: newTotal };
     }
     case 'RESET_BILL':
-      return { ...state, items: [] };
+      return { ...state, items: [], totalAmount: 0 };
     case 'SAVE_BILL': {
       if (state.items.length === 0) return state;
-      const totalAmount = state.items.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
       const newBill: Bill = {
         id: new Date().toISOString(),
         shopName: state.shopName,
         items: [...state.items],
-        totalAmount: parseFloat(totalAmount.toFixed(2)),
+        totalAmount: state.totalAmount,
         createdAt: new Date().toISOString(),
       };
       return {
         ...state,
         items: [],
+        totalAmount: 0,
         history: [newBill, ...state.history],
       };
     }
     case 'HYDRATE_STATE': {
-      const hydratedState = { ...action.payload };
-      // Clear items on hydration/refresh
+      const hydratedState = { ...initialState, ...action.payload };
+      // Clear items on hydration/refresh to prevent carrying over an unfinished bill
       hydratedState.items = [];
+      hydratedState.totalAmount = 0;
        // Ensure hydrated history items have lineTotal calculated
       const hydratedHistory = hydratedState.history?.map(bill => ({
         ...bill,
@@ -72,6 +79,10 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         }))
       })) || [];
       return { ...state, ...hydratedState, history: hydratedHistory };
+    }
+    case 'CALCULATE_TOTAL': {
+        const total = state.items.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
+        return { ...state, totalAmount: parseFloat(total.toFixed(2)) };
     }
     default:
       return state;
@@ -105,7 +116,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      // Create a state object for storage without the 'items'
+      // Create a state object for storage without the 'items' to avoid persisting unfinished bills
       const stateToStore = {
         shopName: state.shopName,
         history: state.history,
@@ -114,7 +125,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Failed to save state to localStorage', error);
     }
-  }, [state]);
+  }, [state.shopName, state.history]);
 
   const setShopName = (name: string) => dispatch({ type: 'SET_SHOP_NAME', payload: name });
   

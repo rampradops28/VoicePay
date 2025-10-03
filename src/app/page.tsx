@@ -1,19 +1,24 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBilling } from '@/context/BillingContext';
 import Header from '@/components/Header';
 import VoiceInput from '@/components/VoiceInput';
 import BillingTable from '@/components/BillingTable';
 import { Button } from '@/components/ui/button';
-import { FileText, RotateCcw } from 'lucide-react';
+import { RotateCcw, MessageSquareText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function BillingPage() {
   const router = useRouter();
-  const { shopName, resetBill, items } = useBilling();
+  const { shopName, resetBill, items, totalAmount } = useBilling();
   const { toast } = useToast();
+  const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -22,17 +27,43 @@ export default function BillingPage() {
     }
   }, [router]);
 
-  const handleGenerateInvoice = () => {
+  const handleSendSmsClick = () => {
     if (items.length === 0) {
       toast({
         variant: 'destructive',
-        title: 'Cannot Generate Invoice',
+        title: 'Cannot Send SMS',
         description: 'Your bill is empty. Add some items first.',
       });
       return;
     }
-    // A simple print-to-PDF solution
-    window.print();
+    setIsSmsDialogOpen(true);
+  };
+
+  const handleSendSms = () => {
+    if (!phoneNumber.trim() || !/^\d{10}$/.test(phoneNumber.trim())) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Phone Number',
+            description: 'Please enter a valid 10-digit phone number.',
+        });
+        return;
+    }
+
+    const itemsText = items
+      .map(item => `${item.name} (${item.quantity}${item.unit}) - ₹${item.lineTotal.toFixed(2)}`)
+      .join('\n');
+    
+    const billText = `Bill from ${shopName}:\n${itemsText}\n\nTotal: ₹${totalAmount.toFixed(2)}`;
+
+    const encodedText = encodeURIComponent(billText);
+    const smsUri = `sms:${phoneNumber}?body=${encodedText}`;
+
+    // Close dialog and reset phone number
+    setIsSmsDialogOpen(false);
+    setPhoneNumber('');
+    
+    // Open SMS app
+    window.location.href = smsUri;
   };
 
   if (!shopName) {
@@ -44,45 +75,57 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-2">
-            <VoiceInput />
-          </div>
-          <div className="lg:col-span-3">
-            <BillingTable />
-            <div className="flex items-center justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={resetBill}>
-                <RotateCcw className="mr-2 h-4 w-4" /> Reset Bill
-              </Button>
-              <Button onClick={handleGenerateInvoice}>
-                <FileText className="mr-2 h-4 w-4" /> Generate Invoice
-              </Button>
+    <>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-2">
+              <VoiceInput />
+            </div>
+            <div className="lg:col-span-3">
+              <BillingTable />
+              <div className="flex items-center justify-end gap-2 mt-4 no-print">
+                <Button variant="outline" onClick={resetBill}>
+                  <RotateCcw className="mr-2 h-4 w-4" /> Reset Bill
+                </Button>
+                <Button onClick={handleSendSmsClick}>
+                  <MessageSquareText className="mr-2 h-4 w-4" /> Send as SMS
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .printable-area, .printable-area * {
-            visibility: visible;
-          }
-          .printable-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .no-print {
-            display: none;
-          }
-        }
-      `}</style>
-    </div>
+        </main>
+      </div>
+
+      <Dialog open={isSmsDialogOpen} onOpenChange={setIsSmsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Send Bill via SMS</DialogTitle>
+            <DialogDescription>
+              Enter the customer's 10-digit phone number to send the bill.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone-number" className="text-right">
+                Phone
+              </Label>
+              <Input
+                id="phone-number"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="9876543210"
+                className="col-span-3"
+                type="tel"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={handleSendSms}>Send SMS</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
