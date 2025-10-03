@@ -45,61 +45,65 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     return { action: 'reset', payload: null };
   }
 
-  // Rule: "What's the total?" or "save bill"
-  if (cmd.includes('total') || cmd.includes('save bill')) {
+  // Rule: "What's the total?" or "save bill" or "kanak"
+  if (cmd.includes('total') || cmd.includes('save bill') || cmd.includes('kanak')) {
     return { action: 'calculate', payload: null };
   }
 
-  // Rule: "Add {qty} {item} at {price} rupees" OR "Add {item} {qty}{unit} {price} rupees"
+  // Flexible Add command regex
+  // add rice 2kg 120rs
   const addRegex = /^add\s+(.+)/i;
   const addMatch = cmd.match(addRegex);
+
   if (addMatch) {
     let content = addMatch[1];
 
-    // Extract price: "at X rupees" or just "X rupees"
-    const priceRegex = /(?:at\s+)?(\d+(\.\d+)?)\s*(?:rs|rupees)?$/i;
+    const priceRegex = /(\d+(\.\d+)?)\s*(?:rs|rupees)\s*$/i;
     const priceMatch = content.match(priceRegex);
     let price: number | null = null;
+
     if (priceMatch) {
-      price = parseFloat(priceMatch[1]);
-      content = content.replace(priceRegex, '').trim();
+        price = parseFloat(priceMatch[1]);
+        content = content.replace(priceRegex, '').trim();
     }
-    
-    // Extract quantity and unit: "X kg", "X ml", etc.
+
     const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?|ml|millilitre|milliliter)\b/i;
     const qtyUnitMatch = content.match(qtyUnitRegex);
     let quantity: number | null = null;
     let unit: string = '';
+
     if (qtyUnitMatch) {
         quantity = parseFloat(qtyUnitMatch[1]);
         unit = normalizeUnit(qtyUnitMatch[3]);
         content = content.replace(qtyUnitRegex, '').trim();
     }
-
-    // Check for quantity at the start (e.g., "Add 2 rice")
+    
+    // If quantity is still not found, check for a number without a unit
     if (quantity === null) {
-      const leadingQtyRegex = /^(\d+(\.\d+)?)\s+/;
-      const leadingQtyMatch = content.match(leadingQtyRegex);
-      if (leadingQtyMatch) {
-        quantity = parseFloat(leadingQtyMatch[1]);
-        content = content.replace(leadingQtyRegex, '').trim();
+      const qtyRegex = /\s(\d+(\.\d+)?)$/i;
+      const qtyMatch = content.match(qtyRegex);
+      if (qtyMatch) {
+        quantity = parseFloat(qtyMatch[1]);
+        content = content.replace(qtyRegex, '').trim();
       }
     }
 
-    const itemName = content.replace(/at$/, '').trim();
+
+    const itemName = content.trim();
 
     if (itemName && quantity !== null && price !== null) {
-      return {
-        action: 'add',
-        payload: {
-          item: itemName,
-          quantity: quantity,
-          unit: unit || 'pcs', // Default to 'pcs'
-          price: price,
-        },
-      };
+        return {
+            action: 'add',
+            payload: {
+                item: itemName,
+                quantity: quantity,
+                unit: unit || 'pcs',
+                price: price
+            }
+        };
     }
   }
+
 
   return null;
 };
