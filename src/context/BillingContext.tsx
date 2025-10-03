@@ -104,8 +104,8 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, items: newItems, totalAmount: newTotal };
     }
     case 'REMOVE_ITEM': {
-      const itemNameLower = action.payload.toLowerCase();
-      const newItems = state.items.filter(item => item.name.toLowerCase() !== itemNameLower);
+      // The payload is now the exact, case-sensitive name of the item to remove.
+      const newItems = state.items.filter(item => item.name !== action.payload);
       const newTotal = newItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
       return { ...state, items: newItems, totalAmount: newTotal };
     }
@@ -286,11 +286,12 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const removeItem = (itemName: string) => {
     if (!itemName) return;
     
-    // Find the item in the current state to confirm it exists and get proper casing for the toast message.
+    // Find the item in the current state, case-insensitively.
     const itemToRemove = state.items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
 
     if (itemToRemove) {
-      dispatch({ type: 'REMOVE_ITEM', payload: itemName });
+      // Dispatch the action with the *exact* name from the bill.
+      dispatch({ type: 'REMOVE_ITEM', payload: itemToRemove.name });
       toast({
         title: 'Item Removed',
         description: `${itemToRemove.name} has been removed from the bill.`,
@@ -367,5 +368,3 @@ export const useBilling = () => {
   }
   return context;
 };
-
-    
