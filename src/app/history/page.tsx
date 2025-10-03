@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useBilling } from '@/context/BillingContext';
@@ -20,7 +20,8 @@ import { format } from 'date-fns';
 import { Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Bill } from '@/lib/types';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -31,16 +32,19 @@ export default function HistoryPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const authStatus = localStorage.getItem('isAuthenticated') === 'true';
     setIsAuthenticated(authStatus);
     if (!authStatus) {
       router.push('/login');
+    } else {
+      setIsLoading(false);
     }
   }, [router]);
   
-  if (!isAuthenticated || !shopName) {
+  if (isLoading || !isAuthenticated || !shopName) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
@@ -97,84 +101,95 @@ export default function HistoryPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Billing History</CardTitle>
-            <CardDescription>A record of all your saved bills.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {history.length === 0 ? (
-              <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">No saved bills yet.</p>
-                <p className="text-sm text-muted-foreground">Completed bills will appear here.</p>
-              </div>
-            ) : (
-              <Accordion type="single" collapsible className="w-full">
-                {history.map((bill) => (
-                  <AccordionItem value={bill.id} key={bill.id}>
-                    <AccordionTrigger>
-                      <div className="flex justify-between w-full pr-4 items-center">
-                        <div className="text-left">
-                          <span>Bill from {format(new Date(bill.createdAt), 'PPpp')}</span>
-                        </div>
-                        <span className="font-semibold text-primary">₹{(bill.totalAmount || 0).toFixed(2)}</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="p-4 border rounded-md bg-background">
-                        <div className="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 className="font-headline text-lg font-semibold">{bill.shopName}</h3>
-                                <p className="text-sm text-muted-foreground">
-                                {format(new Date(bill.createdAt), 'MMMM do, yyyy - h:mm a')}
-                                </p>
+        <Tabs defaultValue="history">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="history">Billing History</TabsTrigger>
+            <TabsTrigger value="analytics">Sales Analytics</TabsTrigger>
+          </TabsList>
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline">Billing History</CardTitle>
+                <CardDescription>A record of all your saved bills.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {history.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">No saved bills yet.</p>
+                    <p className="text-sm text-muted-foreground">Completed bills will appear here.</p>
+                  </div>
+                ) : (
+                  <Accordion type="single" collapsible className="w-full">
+                    {history.map((bill) => (
+                      <AccordionItem value={bill.id} key={bill.id}>
+                        <AccordionTrigger>
+                          <div className="flex justify-between w-full pr-4 items-center">
+                            <div className="text-left">
+                              <span>Bill from {format(new Date(bill.createdAt), 'PPpp')}</span>
                             </div>
-                            <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(bill.id)}>
-                                    <Pencil className="h-4 w-4 text-blue-500" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleResendSmsClick(bill)}>
-                                    <MessageSquare className="h-4 w-4 text-green-500" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(bill.id)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+                            <span className="font-semibold text-primary">₹{(bill.totalAmount || 0).toFixed(2)}</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="p-4 border rounded-md bg-background">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <h3 className="font-headline text-lg font-semibold">{bill.shopName}</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                    {format(new Date(bill.createdAt), 'MMMM do, yyyy - h:mm a')}
+                                    </p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button variant="ghost" size="icon" onClick={() => handleEditClick(bill.id)}>
+                                        <Pencil className="h-4 w-4 text-blue-500" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleResendSmsClick(bill)}>
+                                        <MessageSquare className="h-4 w-4 text-green-500" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(bill.id)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Item</TableHead>
-                              <TableHead className="text-center">Quantity</TableHead>
-                              <TableHead className="text-right">Unit Price</TableHead>
-                              <TableHead className="text-right">Total</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {bill.items.map((item) => (
-                              <TableRow key={item.id}>
-                                <TableCell className="font-medium">{item.name}</TableCell>
-                                <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
-                                <TableCell className="text-right">₹{(item.unitPrice || 0).toFixed(2)}</TableCell>
-                                <TableCell className="text-right">₹{(item.lineTotal || 0).toFixed(2)}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                          <TableFooter>
-                            <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-lg">Grand Total</TableCell>
-                                <TableCell className="text-right font-bold text-lg">₹{(bill.totalAmount || 0).toFixed(2)}</TableCell>
-                            </TableRow>
-                          </TableFooter>
-                        </Table>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            )}
-          </CardContent>
-        </Card>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Item</TableHead>
+                                  <TableHead className="text-center">Quantity</TableHead>
+                                  <TableHead className="text-right">Unit Price</TableHead>
+                                  <TableHead className="text-right">Total</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {bill.items.map((item) => (
+                                  <TableRow key={item.id}>
+                                    <TableCell className="font-medium">{item.name}</TableCell>
+                                    <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
+                                    <TableCell className="text-right">₹{(item.unitPrice || 0).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">₹{(item.lineTotal || 0).toFixed(2)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                              <TableFooter>
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-right font-bold text-lg">Grand Total</TableCell>
+                                    <TableCell className="text-right font-bold text-lg">₹{(bill.totalAmount || 0).toFixed(2)}</TableCell>
+                                </TableRow>
+                              </TableFooter>
+                            </Table>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
 
