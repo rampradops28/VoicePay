@@ -44,7 +44,7 @@ export default function HistoryPage() {
     }
   }, [router]);
   
-  if (isLoading || !isAuthenticated || !shopName) {
+  if (isLoading || !isAuthenticated) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
@@ -194,11 +194,11 @@ export default function HistoryPage() {
     </div>
 
     <Dialog open={isSmsDialogOpen} onOpenChange={(isOpen) => {
-        setIsSmsDialogOpen(isOpen);
         if (!isOpen) {
             setSelectedBill(null);
             setPhoneNumber('');
         }
+        setIsSmsDialogOpen(isOpen);
     }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
