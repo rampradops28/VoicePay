@@ -4,8 +4,24 @@ import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Download, X } from 'lucide-react';
 
+// This interface is needed to extend the Window object
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent;
+  }
+}
+
 export default function InstallPWA() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
@@ -13,32 +29,36 @@ export default function InstallPWA() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
+          console.log('Service Worker registered: ', registration);
         }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
+          console.log('Service Worker registration failed: ', registrationError);
         });
       });
     }
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the default mini-infobar
+    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
+      // Prevent the default mini-infobar from appearing on mobile
       e.preventDefault();
       // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
       // Show the install banner if not already installed
-      if (!window.matchMedia('(display-mode: standalone)').matches) {
+      // and not on a standalone display mode.
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      if (!isStandalone) {
+        console.log('App is not installed, showing banner.');
         setShowBanner(true);
+      } else {
+        console.log('App is already installed, not showing banner.');
       }
-      console.log('`beforeinstallprompt` event was fired.');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     const handleAppInstalled = () => {
       // Hide the install promotion
+      console.log('PWA was installed, hiding banner.');
       setShowBanner(false);
       setDeferredPrompt(null);
-      console.log('PWA was installed');
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -51,6 +71,7 @@ export default function InstallPWA() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
+      console.log('Install prompt not available.');
       return;
     }
     // Show the install prompt
@@ -60,6 +81,7 @@ export default function InstallPWA() {
     console.log(`User response to the install prompt: ${outcome}`);
     // We've used the prompt, and can't use it again, clear it
     setDeferredPrompt(null);
+    // Hide the banner
     setShowBanner(false);
   };
 
@@ -72,7 +94,7 @@ export default function InstallPWA() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg no-print">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg no-print animate-in slide-in-from-bottom-full">
       <div className="container mx-auto p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
            <div className="bg-primary/10 p-2 rounded-lg">

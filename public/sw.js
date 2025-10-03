@@ -1,19 +1,51 @@
-// This is a basic service worker to enable PWA functionality.
+// This is a basic service worker.
+// You can add caching strategies for your assets here.
 
-self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-  // The service worker is installed.
-  // You can pre-cache assets here if needed.
+const CACHE_NAME = 'tamil-voice-pay-cache-v1';
+const urlsToCache = [
+  '/',
+  '/history',
+  '/login',
+  '/manifest.json'
+  // Add other important assets here, like CSS, JS, and key images
+];
+
+self.addEventListener('install', event => {
+  // Perform install steps
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
 });
 
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
-  // The service worker is activated.
-  // You can clean up old caches here.
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      }
+    )
+  );
 });
 
-self.addEventListener('fetch', (event) => {
-  // This simple fetch handler allows the app to be installable.
-  // For a full offline experience, you would need to implement a caching strategy.
-  event.respondWith(fetch(event.request));
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
 });
