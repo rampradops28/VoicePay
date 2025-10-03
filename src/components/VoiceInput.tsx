@@ -90,6 +90,8 @@ export default function VoiceInput() {
   const processCommand = useCallback(
     async (cmd: string, audioDataUri?: string) => {
       const commandToProcess = cmd.trim();
+      setCommand(''); // Clear input immediately
+      setSuggestions([]);
       if (!commandToProcess) return;
 
       console.log(`Processing command: "${commandToProcess}"`);
@@ -101,8 +103,6 @@ export default function VoiceInput() {
           title: 'Invalid Voice Detected',
           description: 'This command was ignored as the voice did not match.',
         });
-        setCommand('');
-        setSuggestions([]);
         return;
       }
       
@@ -115,52 +115,50 @@ export default function VoiceInput() {
                 title: 'Voice Not Verified',
                 description: 'Could not verify your voice. Please try again.',
              });
-             setCommand('');
-             setSuggestions([]);
              return;
         }
       }
 
-      const parsed = parseCommand(commandToProcess);
+      const parsedCommands = parseCommand(commandToProcess);
 
-      if (!parsed) {
+      if (!parsedCommands || parsedCommands.length === 0) {
         toast({
           variant: 'destructive',
           title: 'Invalid Command',
           description: `Could not understand "${commandToProcess}". Please try again.`,
         });
-        setCommand('');
-        setSuggestions([]);
         return;
       }
 
-      switch (parsed.action) {
-        case 'add':
-          addItem({
-            name: parsed.payload.item,
-            quantity: parsed.payload.quantity,
-            unit: parsed.payload.unit,
-            unitPrice: parsed.payload.price,
-          });
-          break;
-        case 'remove':
-          removeItem(parsed.payload.item);
-          break;
-        case 'reset':
-          resetBill();
-          break;
-        case 'save':
-          saveBill();
-          break;
-        case 'calculate':
-          toast({
-            title: 'Action Required',
-            description: 'Please use the "Save Bill" button or command to save the bill.',
-          });
-          break;
-      }
-      setCommand('');
-      setSuggestions([]);
+      parsedCommands.forEach(parsed => {
+        if (!parsed) return;
+        
+        switch (parsed.action) {
+          case 'add':
+            addItem({
+              name: parsed.payload.item,
+              quantity: parsed.payload.quantity,
+              unit: parsed.payload.unit,
+              unitPrice: parsed.payload.price,
+            });
+            break;
+          case 'remove':
+            removeItem(parsed.payload.item);
+            break;
+          case 'reset':
+            resetBill();
+            break;
+          case 'save':
+            saveBill();
+            break;
+          case 'calculate':
+            toast({
+              title: 'Action Required',
+              description: 'Please use the "Save Bill" button or command to save the bill.',
+            });
+            break;
+        }
+      });
     },
     [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled, ownerName]
   );
@@ -180,7 +178,7 @@ export default function VoiceInput() {
     }
     
     const recognition = new SpeechRecognition();
-    recognition.continuous = true; // Keep listening
+    recognition.continuous = true;
     recognition.lang = 'en-IN';
     recognition.interimResults = true;
 
@@ -212,17 +210,17 @@ export default function VoiceInput() {
       
       const fullTranscript = (finalTranscript || interimTranscript).trim();
       setCommand(fullTranscript);
+      debouncedFetchSuggestions(fullTranscript);
 
       // Process final transcripts as they come in
       if (finalTranscript.trim()) {
         processCommand(finalTranscript.trim());
         finalTranscript = ''; // Reset for the next command
-        setCommand(''); // Clear the input box
       }
     };
 
     return recognition;
-  }, [toast, processCommand]);
+  }, [toast, processCommand, debouncedFetchSuggestions]);
 
   const handleMicClick = async () => {
     if (!isOnline) {
@@ -322,3 +320,5 @@ export default function VoiceInput() {
     </Card>
   );
 }
+
+    

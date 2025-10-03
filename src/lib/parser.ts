@@ -31,100 +31,125 @@ const stripArticle = (text: string): string => {
 };
 
 
-export const parseCommand = (command: string): ParsedCommand | null => {
+export const parseCommand = (command: string): ParsedCommand[] | null => {
   const cmd = command.toLowerCase().trim();
 
-  // Rule: "remove <item>"
-  const removeRegex = /^(?:remove|delete|cancel)\s+(.+)$/i;
-  const removeMatch = cmd.match(removeRegex);
-  if (removeMatch) {
-    return {
-      action: 'remove',
-      payload: {
-        item: stripArticle(removeMatch[1].trim()),
-      },
-    };
-  }
+  // Split command by "and" or "add" to handle chained commands
+  const commandSegments = cmd.split(/\s+(?:and|add)\s+/i);
+  
+  const parsedCommands: ParsedCommand[] = [];
 
-  // Rule: "clear bill" or "reset bill"
-  if (cmd.includes('clear bill') || cmd.includes('reset bill')) {
-    return { action: 'reset', payload: null };
-  }
-
-  // Rule: "save bill"
-  if (cmd.includes('save bill')) {
-    return { action: 'save', payload: null };
-  }
-
-  // Rule: "What's the total?" or "kanak"
-  if (cmd.includes('total') || cmd.includes('kanak')) {
-    return { action: 'calculate', payload: null };
-  }
-
-  // Flexible Add command regex: "add <item> <quantity/price> <price/quantity>"
-  const addRegex = /^add\s+(.+)/i;
-  const addMatch = cmd.match(addRegex);
-
-  if (addMatch) {
-    let content = addMatch[1];
-    let price: number | null = null;
-    let quantity: number | null = null;
-    let unit: string = '';
-
-    // Regex for price: (rs 50) or (50 rs) or (50rs) or (50 rupees)
-    const priceRegex = /(?:(?:rs|rupees)\s*(\d+(\.\d+)?)|(\d+(\.\d+)?)\s*(?:rs|rupees))/i;
-    const priceMatch = content.match(priceRegex);
-
-    if (priceMatch) {
-      price = parseFloat(priceMatch[1] || priceMatch[3]);
-      content = content.replace(priceRegex, '').trim();
-    }
-
-    // Regex for quantity and unit: (2 kg) or (2kg)
-    const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?|ml|millilitre|milliliter)\b/i;
-    const qtyUnitMatch = content.match(qtyUnitRegex);
-    
-    if (qtyUnitMatch) {
-      quantity = parseFloat(qtyUnitMatch[1]);
-      unit = normalizeUnit(qtyUnitMatch[3]);
-      content = content.replace(qtyUnitRegex, '').trim();
-    }
-
-    // If quantity is still null, look for a standalone number that could be quantity
-    if (quantity === null) {
-      const standaloneQtyRegex = /\b(\d+(\.\d+)?)\b(?!s*rs|s*rupees)/i;
-      const standaloneQtyMatch = content.match(standaloneQtyRegex);
-      if (standaloneQtyMatch) {
-        quantity = parseFloat(standaloneQtyMatch[1]);
-        content = content.replace(standaloneQtyRegex, '').trim();
+  // Always prepend "add" to the first segment if it's not a special command
+  const firstSegment = commandSegments[0].trim();
+  if (!/^(remove|delete|cancel|clear|reset|save|total|kanak)/.test(firstSegment)) {
+      if (!firstSegment.startsWith('add')) {
+        commandSegments[0] = 'add ' + firstSegment;
       }
-    }
-    
-    // If price is still null, look for a standalone number that could be price
-    if (price === null) {
-      const standalonePriceRegex = /(\d+(\.\d+)?)/;
-      const standalonePriceMatch = content.match(standalonePriceRegex);
-      if(standalonePriceMatch){
-        price = parseFloat(standalonePriceMatch[1]);
-        content = content.replace(standalonePriceRegex, '').trim();
-      }
-    }
-    
-    const rawItemName = content.replace(/\s+/g, ' ').trim();
-    const itemName = stripArticle(rawItemName);
+  }
 
-    if (itemName && quantity !== null && price !== null) {
-      return {
-        action: 'add',
+
+  for (let segment of commandSegments) {
+    segment = segment.trim();
+    if (!segment) continue;
+
+    // Re-add "add" if it was stripped by the split, for subsequent segments
+    if (!/^(add|remove|delete|cancel|clear|reset|save|total|kanak)/.test(segment)) {
+      segment = 'add ' + segment;
+    }
+
+    // Rule: "remove <item>"
+    const removeRegex = /^(?:remove|delete|cancel)\s+(.+)$/i;
+    const removeMatch = segment.match(removeRegex);
+    if (removeMatch) {
+      parsedCommands.push({
+        action: 'remove',
         payload: {
-          item: itemName,
-          quantity: quantity,
-          unit: unit || 'pcs', // Default to 'pcs' if no unit was parsed
-          price: price,
+          item: stripArticle(removeMatch[1].trim()),
         },
-      };
+      });
+      continue;
+    }
+
+    // Rule: "clear bill" or "reset bill"
+    if (segment.includes('clear bill') || segment.includes('reset bill')) {
+      parsedCommands.push({ action: 'reset', payload: null });
+      continue;
+    }
+
+    // Rule: "save bill"
+    if (segment.includes('save bill')) {
+      parsedCommands.push({ action: 'save', payload: null });
+      continue;
+    }
+
+    // Rule: "What's the total?" or "kanak"
+    if (segment.includes('total') || segment.includes('kanak')) {
+      parsedCommands.push({ action: 'calculate', payload: null });
+      continue;
+    }
+
+    const addRegex = /^add\s+(.+)/i;
+    const addMatch = segment.match(addRegex);
+    if (addMatch) {
+      let content = addMatch[1];
+      let price: number | null = null;
+      let quantity: number | null = null;
+      let unit: string = '';
+
+      const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees))/i;
+      const priceMatch = content.match(priceRegex);
+
+      if (priceMatch) {
+        price = parseFloat(priceMatch[1]);
+        content = content.replace(priceRegex, '').trim();
+      }
+
+      const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?|ml|millilitre|milliliter)\b/i;
+      const qtyUnitMatch = content.match(qtyUnitRegex);
+      
+      if (qtyUnitMatch) {
+        quantity = parseFloat(qtyUnitMatch[1]);
+        unit = normalizeUnit(qtyUnitMatch[3]);
+        content = content.replace(qtyUnitRegex, '').trim();
+      }
+
+      if (quantity === null) {
+        const standaloneQtyRegex = /^\s*(\d+(\.\d+)?)\b/;
+        const standaloneQtyMatch = content.match(standaloneQtyRegex);
+        if (standaloneQtyMatch) {
+          quantity = parseFloat(standaloneQtyMatch[1]);
+          content = content.replace(standaloneQtyRegex, '').trim();
+        }
+      }
+      
+      if (price === null) {
+        const standalonePriceRegex = /(\d+(\.\d+)?)\s*$/;
+        const standalonePriceMatch = content.match(standalonePriceRegex);
+        if(standalonePriceMatch){
+          price = parseFloat(standalonePriceMatch[1]);
+          content = content.replace(standalonePriceRegex, '').trim();
+        }
+      }
+      
+      const rawItemName = content.replace(/\s+/g, ' ').trim();
+      const itemName = stripArticle(rawItemName);
+
+      if (itemName && quantity !== null && price !== null) {
+        parsedCommands.push({
+          action: 'add',
+          payload: {
+            item: itemName,
+            quantity: quantity,
+            unit: unit || 'pcs', 
+            price: price, // price is now unitPrice
+          },
+        });
+        continue;
+      }
     }
   }
 
-  return null;
+  return parsedCommands.length > 0 ? parsedCommands : null;
 };
+
+    
