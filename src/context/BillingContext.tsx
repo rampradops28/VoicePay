@@ -99,19 +99,24 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, history: updatedHistory };
     }
     case 'HYDRATE_STATE': {
-      const hydratedState = { ...initialState, ...action.payload };
-      // Clear items on hydration/refresh to prevent carrying over an unfinished bill
-      hydratedState.items = [];
-      hydratedState.totalAmount = 0;
-       // Ensure hydrated history items have lineTotal calculated
-      const hydratedHistory = hydratedState.history?.map(bill => ({
+      const payload = action.payload;
+      // Ensure hydrated history items have lineTotal calculated, if they exist
+      const hydratedHistory = payload.history?.map(bill => ({
         ...bill,
         items: bill.items.map(item => ({
           ...item,
           lineTotal: parseFloat(((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2))
         }))
       })) || [];
-      return { ...state, ...hydratedState, history: hydratedHistory };
+      
+      return { 
+        ...state, 
+        shopName: payload.shopName || '',
+        history: hydratedHistory,
+        // Reset current bill on hydration
+        items: [],
+        totalAmount: 0,
+      };
     }
     case 'CALCULATE_TOTAL': {
         const total = state.items.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
@@ -150,7 +155,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      // Create a state object for storage without the 'items' to avoid persisting unfinished bills
+      // Persist shopName and history. Current bill items are not persisted.
       const stateToStore = {
         shopName: state.shopName,
         history: state.history,
