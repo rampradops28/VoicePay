@@ -61,7 +61,7 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     let unit: string = '';
 
     // Regex for price: (rs 50) or (50 rs) or (50rs) or (50 rupees)
-    const priceRegex = /(?:rs|rupees)\s*(\d+(\.\d+)?)|(\d+(\.\d+)?)\s*(?:rs|rupees)/i;
+    const priceRegex = /(?:(?:rs|rupees)\s*(\d+(\.\d+)?)|(\d+(\.\d+)?)\s*(?:rs|rupees))/i;
     const priceMatch = content.match(priceRegex);
 
     if (priceMatch) {
