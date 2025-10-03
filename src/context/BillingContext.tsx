@@ -289,8 +289,9 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     if (!itemName) return;
     const itemNameLower = itemName.toLowerCase();
     const itemExists = state.items.some(i => i.name.toLowerCase() === itemNameLower);
+    
     if (itemExists) {
-        dispatch({ type: 'REMOVE_ITEM', payload: itemName });
+        dispatch({ type: 'REMOVE_ITEM', payload: itemNameLower });
         toast({
             title: 'Item Removed',
             description: `${itemName} has been removed from the bill.`,
