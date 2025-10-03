@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { AppProvider } from '@/context/AppProvider';
+import AudioPlayer from '@/components/AudioPlayer';
 
 export const metadata: Metadata = {
   title: 'Tamil VoicePay',
@@ -29,6 +30,7 @@ export default function RootLayout({
         <AppProvider>
           {children}
           <Toaster />
+          <AudioPlayer />
         </AppProvider>
       </body>
     </html>

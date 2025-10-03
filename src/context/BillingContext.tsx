@@ -3,8 +3,14 @@
 import { createContext, useContext, useReducer, ReactNode, useEffect, useCallback, useState } from 'react';
 import { BillItem, Bill } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { textToSpeech } from '@/ai/flows/text-to-speech';
 
 type Language = 'en-IN' | 'ta-IN';
+
+interface AudioState {
+    src: string;
+    id: number;
+}
 
 interface BillingState {
   ownerName: string;
@@ -13,6 +19,7 @@ interface BillingState {
   totalAmount: number;
   voiceprints: { [key: string]: boolean };
   language: Language;
+  audio: AudioState | null;
 }
 
 type Action =
@@ -26,7 +33,9 @@ type Action =
   | { type: 'CALCULATE_TOTAL' }
   | { type: 'ENROLL_VOICE'; payload: string }
   | { type: 'REMOVE_VOICEPRINT'; payload: string }
-  | { type: 'SET_LANGUAGE', payload: Language };
+  | { type: 'SET_LANGUAGE', payload: Language }
+  | { type: 'SET_AUDIO', payload: AudioState }
+  | { type: 'CLEAR_AUDIO' };
 
 const initialState: BillingState = {
   ownerName: '',
@@ -35,6 +44,7 @@ const initialState: BillingState = {
   totalAmount: 0,
   voiceprints: {},
   language: 'en-IN',
+  audio: null,
 };
 
 const billingReducer = (state: BillingState, action: Action): BillingState => {
@@ -43,6 +53,10 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, ownerName: action.payload };
     case 'SET_LANGUAGE':
       return { ...state, language: action.payload };
+    case 'SET_AUDIO':
+      return { ...state, audio: action.payload };
+    case 'CLEAR_AUDIO':
+      return { ...state, audio: null };
     case 'ENROLL_VOICE': {
         const newVoiceprints = { ...state.voiceprints, [action.payload]: true };
         return { ...state, voiceprints: newVoiceprints };
@@ -61,21 +75,19 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       let newItems;
 
       if (existingItemIndex > -1) {
-        // Item exists, replace it
         newItems = state.items.map((item, index) => {
           if (index === existingItemIndex) {
             return {
               ...item,
-              quantity: quantity, // Replace quantity
-              unit: unit, // Replace unit
-              unitPrice: unitPrice, // Update to the latest price
+              quantity: quantity,
+              unit: unit,
+              unitPrice: unitPrice,
               lineTotal: parseFloat((quantity * unitPrice).toFixed(2)),
             };
           }
           return item;
         });
       } else {
-        // Item doesn't exist, add it
         const newItem: BillItem = {
           id: new Date().toISOString() + Math.random(),
           name: name,
@@ -159,6 +171,8 @@ interface BillingContextType extends BillingState {
   enrollVoice: (ownerName: string) => void;
   removeVoiceprint: (ownerName: string) => void;
   setLanguage: (language: Language) => void;
+  speak: (text: string) => void;
+  clearAudio: () => void;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -198,6 +212,19 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [state.ownerName, state.history, state.voiceprints, state.language, isLoading]);
 
+  const speak = useCallback(async (text: string) => {
+    try {
+      const { audioDataUri } = await textToSpeech(text);
+      dispatch({ type: 'SET_AUDIO', payload: { src: audioDataUri, id: Date.now() } });
+    } catch (error) {
+      console.error("Failed to synthesize speech:", error);
+    }
+  }, []);
+
+  const clearAudio = () => {
+    dispatch({ type: 'CLEAR_AUDIO' });
+  };
+
   const setOwnerName = (name: string) => {
     dispatch({ type: 'SET_OWNER_NAME', payload: name });
   };
@@ -231,11 +258,13 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             title: 'Item Replaced',
             description: `${item.name} has been updated to ${item.quantity}${item.unit} at Rs ${item.unitPrice.toFixed(2)} each.`,
         });
+        speak(`Updated ${item.name}.`);
     } else {
         toast({
             title: 'Item Added',
             description: `${item.quantity}${item.unit} ${item.name} for Rs ${item.unitPrice.toFixed(2)} per ${item.unit}`,
         });
+        speak(`Added ${item.quantity} ${item.unit} of ${item.name}.`);
     }
   };
 
@@ -249,12 +278,14 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             title: 'Item Removed',
             description: `${itemName} has been removed from the bill.`,
         });
+        speak(`Removed ${itemName}.`);
     } else {
         toast({
             variant: 'destructive',
             title: 'Item Not Found',
             description: `Could not find "${itemName}" in the current bill.`,
         });
+        speak(`Could not find ${itemName}.`);
     }
   };
 
@@ -265,8 +296,9 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
           title: 'Bill Cleared',
           description: 'The current bill has been reset.',
       });
+      speak('Bill cleared.');
     }
-  }, [toast, state.items.length]);
+  }, [toast, state.items.length, speak]);
   
   const saveBill = useCallback(() => {
     if (state.items.length > 0) {
@@ -275,6 +307,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             title: 'Bill Saved & Reset',
             description: 'The current bill has been saved to history and a new bill has been started.',
         });
+        speak('Bill saved.');
     } else {
         toast({
             variant: 'destructive',
@@ -282,7 +315,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             description: 'Add items before saving.',
         });
     }
-  }, [state.items.length, toast]);
+  }, [state.items.length, toast, speak]);
 
   const deleteBill = (billId: string) => {
     dispatch({ type: 'DELETE_BILL', payload: billId });
@@ -300,6 +333,8 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
       enrollVoice,
       removeVoiceprint,
       setLanguage,
+      speak,
+      clearAudio,
   };
 
   return (
