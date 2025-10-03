@@ -30,15 +30,17 @@ export default function HistoryPage() {
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-    if (!isAuthenticated) {
+    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
+    setIsAuthenticated(authStatus);
+    if (!authStatus) {
       router.push('/login');
     }
   }, [router]);
   
-  if (!shopName) {
+  if (!isAuthenticated || !shopName) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 

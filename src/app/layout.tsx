@@ -24,8 +24,8 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased min-h-screen')}>
         <BillingProvider>
-          {children}
-          <Toaster />
+            {children}
+            <Toaster />
         </BillingProvider>
       </body>
     </html>
