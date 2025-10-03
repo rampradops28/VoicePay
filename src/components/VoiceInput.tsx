@@ -126,7 +126,7 @@ export default function VoiceInput() {
       };
 
       recognition.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
+        console.log('Speech recognition error', event.error);
         if (event.error !== 'aborted' && event.error !== 'no-speech') {
           toast({ variant: 'destructive', title: 'Voice Error', description: `An error occurred: ${event.error}` });
         }
