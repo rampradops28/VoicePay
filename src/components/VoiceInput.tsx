@@ -10,26 +10,10 @@ import { useBilling } from '@/context/BillingContext';
 import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Wand2, Loader2 } from 'lucide-react';
 import { verifyVoice } from '@/ai/flows/verify-voice';
-
-// Debounce function
-const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<F>): void => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      func(...args);
-    }, delay);
-  };
-};
 
 export default function VoiceInput() {
   const [command, setCommand] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const { addItem, removeItem, resetBill, saveBill, voiceprints, ownerName } = useBilling();
   const { toast } = useToast();
@@ -57,51 +41,14 @@ export default function VoiceInput() {
     };
   }, []);
 
-  const fetchSuggestions = useCallback(async (partialCommand: string) => {
-    if (partialCommand.length < 3) {
-      setSuggestions([]);
-      return;
-    }
-    setIsLoadingSuggestions(true);
-    try {
-      const response = await fetch('/api/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partialCommand }),
-      });
-      if (!response.ok) {
-        console.error('Failed to fetch suggestions, response not ok.');
-        setSuggestions([]);
-        return;
-      }
-      const data = await response.json();
-      setSuggestions(data.suggestions || []);
-    } catch (error) {
-      console.error('Error fetching or parsing suggestions:', error);
-      setSuggestions([]);
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
-  }, []);
-
-  const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 300), [fetchSuggestions]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setCommand(value);
-    debouncedFetchSuggestions(value);
-  };
-
   const processCommand = useCallback(
     async (cmd: string, audioDataUri?: string) => {
       const commandToProcess = cmd.trim();
       setCommand(''); // Clear input immediately
-      setSuggestions([]);
       if (!commandToProcess) return;
 
       console.log(`Processing command: "${commandToProcess}"`);
 
-      // In a real app, you'd send the audio to a backend for verification
       if (isVoiceEnrolled && audioDataUri && ownerName) {
         const verificationResult = await verifyVoice({ ownerName, audioDataUri, command: commandToProcess });
         if (!verificationResult.isVerified) {
@@ -181,7 +128,13 @@ export default function VoiceInput() {
     
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
-      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+      if (event.error === 'network') {
+        toast({
+          variant: 'destructive',
+          title: 'Network Error',
+          description: 'Voice recognition requires an internet connection. Please check your connection and try again.',
+        });
+      } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
         toast({ variant: 'destructive', title: 'Voice Error', description: `An error occurred: ${event.error}` });
       }
       setIsRecording(false);
@@ -205,7 +158,6 @@ export default function VoiceInput() {
       
       const fullTranscript = (finalTranscript || interimTranscript).trim();
       setCommand(fullTranscript);
-      debouncedFetchSuggestions(fullTranscript);
 
       // Process final transcripts as they come in
       if (finalTranscript.trim()) {
@@ -218,7 +170,7 @@ export default function VoiceInput() {
     };
 
     return recognition;
-  }, [toast, processCommand, debouncedFetchSuggestions]);
+  }, [toast, processCommand]);
 
   const handleMicClick = async () => {
     if (!isOnline) {
@@ -242,7 +194,6 @@ export default function VoiceInput() {
         if (recognition) {
           recognitionRef.current = recognition;
           setCommand('');
-          setSuggestions([]);
           recognition.start();
         }
       } catch (err) {
@@ -275,7 +226,7 @@ export default function VoiceInput() {
           <Input
             placeholder='e.g., "add tomato 2kg 50rs"'
             value={command}
-            onChange={handleInputChange}
+            onChange={(e) => setCommand(e.target.value)}
           />
           <Button
             type="button"
@@ -289,32 +240,6 @@ export default function VoiceInput() {
             {!isOnline ? <WifiOff /> : <Mic />}
           </Button>
         </form>
-        <div className="mt-4 min-h-[100px]">
-          {isLoadingSuggestions && <Loader2 className="animate-spin text-muted-foreground mx-auto" />}
-          {!isLoadingSuggestions && suggestions.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Wand2 className="h-4 w-4" />
-                Suggestions
-              </h4>
-              <ul className="space-y-1">
-                {suggestions.map((s, i) => (
-                  <li key={i}>
-                    <button
-                      onClick={() => {
-                        const audioDataUri = 'data:audio/webm;base64,UklGRgA...';
-                        processCommand(s, audioDataUri);
-                      }}
-                      className="text-left w-full p-2 text-sm rounded-md hover:bg-secondary"
-                    >
-                      {s}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
