@@ -46,7 +46,7 @@ const normalizeUnit = (unit: string): string => {
 };
 
 const stripLeadingNoise = (text: string): string => {
-  return text.replace(/^(a|an|add|at|had|remove|delete|cancel)\s+/i, '').trim();
+  return text.replace(/^(a|an|add|at|had|remove|delete|cancel|சேர்|நீக்கு)\s+/i, '').trim();
 };
 
 
@@ -54,7 +54,8 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
   const tamilConvertedCommand = convertTamilNumbers(command);
   const cmd = tamilConvertedCommand.toLowerCase().trim();
 
-  const commandSegments = cmd.split(/\s+(?:and|మరియు|ಮತ್ತು|കൂടാതെ)\s+/i);
+  // Split by "and" and its Tamil equivalents
+  const commandSegments = cmd.split(/\s+(?:and|மற்றும்|mattum)\s+/i);
   
   const parsedCommands: ParsedCommand[] = [];
 
@@ -62,18 +63,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     segment = segment.trim();
     if (!segment) continue;
 
-    const removeRegex = /^(?:remove|delete|cancel|நீக்கு)\s+(.+)$/i;
-    const removeMatch = segment.match(removeRegex);
-    if (removeMatch) {
-      parsedCommands.push({
-        action: 'remove',
-        payload: {
-          item: stripLeadingNoise(removeMatch[1].trim()),
-        },
-      });
-      continue;
-    }
-
+    // --- Actions that don't involve items ---
     if (segment.includes('clear') || segment.includes('reset') || segment.includes('அழி')) {
       parsedCommands.push({ action: 'reset', payload: null });
       continue;
@@ -88,20 +78,37 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       parsedCommands.push({ action: 'calculate', payload: null });
       continue;
     }
+    
+    // --- Actions that involve items (add/remove) ---
 
+    // Look for a remove command
+    const removeRegex = /^(?:remove|delete|cancel|நீக்கு)\s+(.+)$/i;
+    const removeMatch = segment.match(removeRegex);
+    if (removeMatch) {
+      parsedCommands.push({
+        action: 'remove',
+        payload: {
+          item: stripLeadingNoise(removeMatch[1].trim()),
+        },
+      });
+      continue;
+    }
+
+    // --- Assume it's an add command from here ---
     let content = segment;
     let price: number | null = null;
     let quantity: number | null = null;
     let unit: string = '';
 
+    // Regex to find price (e.g., "50rs", "50 rupees", "at 50", "50 ரூ")
     const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees|ரூ)|at\s+(\d+(\.\d+)?))/i;
     const priceMatch = content.match(priceRegex);
-
     if (priceMatch) {
       price = parseFloat(priceMatch[1] || priceMatch[3]);
       content = content.replace(priceRegex, '').trim();
     }
     
+    // Regex to find quantity and optional unit (e.g., "2kg", "2 kg", "2")
     const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)?/i;
     const qtyUnitMatch = content.match(qtyUnitRegex);
     
@@ -113,6 +120,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       content = content.replace(qtyUnitRegex, '').trim();
     }
     
+    // If price wasn't found with "rs" or "at", check for a trailing number
     if (price === null) {
       const standalonePriceRegex = /(\d+(\.\d+)?)\s*$/;
       const standalonePriceMatch = content.match(standalonePriceRegex);
@@ -122,16 +130,18 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       }
     }
     
+    // The remaining content is the item name
     const rawItemName = content.replace(/\s+/g, ' ').trim();
     const itemName = stripLeadingNoise(rawItemName);
 
+    // Only create an 'add' command if we have all the necessary parts
     if (itemName && quantity !== null && price !== null) {
       parsedCommands.push({
         action: 'add',
         payload: {
           item: itemName,
           quantity: quantity,
-          unit: unit || 'pcs', 
+          unit: unit || 'pcs', // Default to 'pcs' if no unit is found
           price: price,
         },
       });
