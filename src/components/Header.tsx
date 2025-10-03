@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { useBilling } from '@/context/BillingContext';
-import { History, LogOut, Receipt, TrendingUp } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -19,9 +19,9 @@ export default function Header() {
   };
 
   const navItems = [
-    { href: '/', label: 'Billing', icon: Receipt },
-    { href: '/history', label: 'History', icon: History },
-    { href: '/analytics', label: 'Analytics', icon: TrendingUp },
+    { href: '/', label: 'Billing' },
+    { href: '/history', label: 'History' },
+    { href: '/analytics', label: 'Analytics' },
   ];
 
   return (
@@ -38,11 +38,10 @@ export default function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center transition-colors hover:text-foreground/80',
+                'transition-colors hover:text-foreground/80',
                 pathname === item.href ? 'text-foreground' : 'text-foreground/60'
               )}
             >
-              <item.icon className="mr-2 h-4 w-4" />
               {item.label}
             </Link>
           ))}
