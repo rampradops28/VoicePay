@@ -1,3 +1,4 @@
+
 export type ParsedCommand =
   | { action: 'add'; payload: { item: string; quantity: number; unit: string; price: number } }
   | { action: 'remove'; payload: { item: string } }
@@ -86,12 +87,13 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     const removeRegex = /^(?:remove|delete|cancel|நீக்கு)\s+(.+)$/i;
     const removeMatch = segment.match(removeRegex);
     if (removeMatch) {
-      parsedCommands.push({
-        action: 'remove',
-        payload: {
-          item: stripLeadingNoise(removeMatch[1].trim()),
-        },
-      });
+        const itemToRemove = removeMatch[1].trim().split(' ').pop() || '';
+        if (itemToRemove) {
+             parsedCommands.push({
+                action: 'remove',
+                payload: { item: itemToRemove },
+            });
+        }
       continue;
     }
 
@@ -131,9 +133,9 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       }
     }
     
-    // The remaining content is the item name
-    const rawItemName = content.replace(/\s+/g, ' ').trim();
-    const itemName = stripLeadingNoise(rawItemName);
+    // The remaining content is the item name. We take the last word as the item.
+    const words = content.replace(/\s+/g, ' ').trim().split(' ');
+    const itemName = words.pop() || '';
 
     // Only create an 'add' command if we have all the necessary parts
     if (itemName && quantity !== null && price !== null) {
