@@ -49,11 +49,11 @@ const prompt = ai.definePrompt({
   output: {schema: VoiceCommandSuggestionsOutputSchema},
   prompt: `You are a helpful assistant that suggests valid voice commands for a billing application.
 
-  The application supports the following command structure:
-  - Adding items: \"add <quantity> <unit> <item> for <price>\"
-  - Removing items: \"remove <item>\"
-  - Calculating total: \"calculate total\" or \"kanak\"
-  - Resetting bill: \"reset bill\"
+  The application supports the following command structures:
+  - Adding items: "add <item> <quantity><unit> <price>rs" (e.g., "add rice 2kg 120rs")
+  - Removing items: "remove <item>"
+  - Calculating total: "calculate total" or "kanak"
+  - Resetting bill: "reset bill"
 
   Given the following partial command, suggest up to 5 valid commands that the user might want to use.
 

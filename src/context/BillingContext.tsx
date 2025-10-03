@@ -32,7 +32,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       const newItem: BillItem = {
         ...action.payload,
         id: new Date().toISOString(),
-        lineTotal: parseFloat((action.payload.quantity * action.payload.unitPrice).toFixed(2)),
+        lineTotal: parseFloat((action.payload.quantity * (action.payload.unitPrice || 0)).toFixed(2)),
       };
       return { ...state, items: [...state.items, newItem] };
     }
@@ -45,7 +45,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, items: [] };
     case 'SAVE_BILL': {
       if (state.items.length === 0) return state;
-      const totalAmount = state.items.reduce((acc, item) => acc + item.lineTotal, 0);
+      const totalAmount = state.items.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
       const newBill: Bill = {
         id: new Date().toISOString(),
         shopName: state.shopName,
@@ -60,7 +60,12 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       };
     }
     case 'HYDRATE_STATE':
-      return { ...state, ...action.payload };
+      // Ensure hydrated items have lineTotal calculated
+      const hydratedItems = action.payload.items?.map(item => ({
+        ...item,
+        lineTotal: parseFloat(((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2))
+      })) || [];
+      return { ...state, ...action.payload, items: hydratedItems };
     default:
       return state;
   }
@@ -148,7 +153,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             description: 'Add items before saving.',
         });
     }
-  }, [state.items.length, toast]);
+  }, [state.items, toast]);
 
   return (
     <BillingContext.Provider value={{ ...state, setShopName, addItem, removeItem, resetBill, saveBill }}>

@@ -27,7 +27,7 @@ export default function VoiceInput() {
   const [command, setCommand] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [isRecording, setIsRecording] = useState(false); // Mock recording state
+  const [isRecording, setIsRecording] = useState(false);
   const { addItem, removeItem, resetBill, saveBill } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
@@ -64,19 +64,27 @@ export default function VoiceInput() {
   };
   
   const processCommand = useCallback((cmd: string) => {
+    if (!cmd.trim()) return;
+
     const parsed = parseCommand(cmd);
     if (!parsed) {
         toast({
             variant: 'destructive',
             title: 'Invalid Command',
-            description: 'The command was not recognized. Please use the correct format.',
+            description: 'The command was not recognized. Please use a valid format.',
         });
         return;
     }
 
     switch (parsed.action) {
         case 'add':
-            addItem(parsed.payload);
+            // The parser now provides item, quantity, unit, and price
+            addItem({
+                name: parsed.payload.item,
+                quantity: parsed.payload.quantity,
+                unit: parsed.payload.unit,
+                unitPrice: parsed.payload.price,
+            });
             break;
         case 'remove':
             removeItem(parsed.payload.item);
@@ -104,21 +112,23 @@ export default function VoiceInput() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.lang = 'en-US'; // Can be adapted for Tamil if browser supports
+      recognition.continuous = false; // Stop after first result
+      recognition.lang = 'en-IN'; // Set to Indian English for better accuracy
       recognition.interimResults = false;
 
       recognition.onstart = () => setIsRecording(true);
       recognition.onend = () => setIsRecording(false);
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
-        toast({ variant: 'destructive', title: 'Voice Error', description: event.error });
+        toast({ variant: 'destructive', title: 'Voice Error', description: event.error === 'no-speech' ? 'No speech detected.' : event.error });
         setIsRecording(false);
       };
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setCommand(transcript);
         processCommand(transcript);
+        setIsRecording(false); // Manually set recording to false
+        recognition.stop(); // Ensure it stops
       };
       recognitionRef.current = recognition;
     }
@@ -131,8 +141,10 @@ export default function VoiceInput() {
     }
     if (isRecording) {
       recognitionRef.current.stop();
+      setIsRecording(false);
     } else {
       recognitionRef.current.start();
+      setIsRecording(true);
     }
   };
 
@@ -151,7 +163,7 @@ export default function VoiceInput() {
       <CardContent>
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <Input
-            placeholder='e.g., "add 2 kg rice for 60"'
+            placeholder='e.g., "add tomato 2kg 50rs"'
             value={command}
             onChange={handleInputChange}
           />

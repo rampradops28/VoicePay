@@ -1,15 +1,17 @@
 export type ParsedCommand =
-  | { action: 'add'; payload: { quantity: number; unit: string; item: string; price: number } }
+  | { action: 'add'; payload: { item: string; quantity: number; unit: string; price: number } }
   | { action: 'remove'; payload: { item: string } }
   | { action: 'calculate' | 'reset'; payload: null };
 
 const unitMap: { [key: string]: string } = {
   kilo: 'kg',
   kilogram: 'kg',
+  kilograms: 'kg',
   piece: 'pcs',
   pieces: 'pcs',
   litre: 'ltr',
   liter: 'ltr',
+  liters: 'ltr',
   gram: 'g',
   grams: 'g',
 };
@@ -22,17 +24,32 @@ const normalizeUnit = (unit: string): string => {
 export const parseCommand = (command: string): ParsedCommand | null => {
   const cmd = command.toLowerCase().trim();
 
-  // Rule: "add <quantity> <unit> <item> for <price>"
-  const addRegex = /^add\s+(\d+(\.\d+)?)\s+(kg|kilo|kilogram|pcs|piece|pieces|g|gram|grams|ltr|litre|liter)\s+(.+?)\s+for\s+(\d+(\.\d+)?)$/i;
+  // Rule: "add <item> <quantity><unit> <price>rs" or "add <item> <quantity> <unit> <price>"
+  const addRegex = /^add\s+(.+?)\s+(\d+(\.\d+)?)\s*(kg|kilo|kilogram|kilograms|pcs|piece|pieces|g|gram|grams|ltr|litre|liters)\s+(\d+(\.\d+)?)\s*r?s?$/i;
   const addMatch = cmd.match(addRegex);
   if (addMatch) {
     return {
       action: 'add',
       payload: {
-        quantity: parseFloat(addMatch[1]),
-        unit: normalizeUnit(addMatch[3]),
-        item: addMatch[4].trim(),
+        item: addMatch[1].trim(),
+        quantity: parseFloat(addMatch[2]),
+        unit: normalizeUnit(addMatch[4]),
         price: parseFloat(addMatch[5]),
+      },
+    };
+  }
+
+  // Legacy Rule: "add <quantity> <unit> <item> for <price>"
+  const addLegacyRegex = /^add\s+(\d+(\.\d+)?)\s+(kg|kilo|kilogram|pcs|piece|pieces|g|gram|grams|ltr|litre|liter)\s+(.+?)\s+for\s+(\d+(\.\d+)?)$/i;
+  const addLegacyMatch = cmd.match(addLegacyRegex);
+  if (addLegacyMatch) {
+    return {
+      action: 'add',
+      payload: {
+        quantity: parseFloat(addLegacyMatch[1]),
+        unit: normalizeUnit(addLegacyMatch[3]),
+        item: addLegacyMatch[4].trim(),
+        price: parseFloat(addLegacyMatch[5]),
       },
     };
   }
