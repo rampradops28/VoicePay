@@ -16,22 +16,22 @@ import { useToast } from '@/hooks/use-toast';
 export default function LoginPage() {
   const [shopNameInput, setShopNameInput] = useState('');
   const router = useRouter();
-  const { setShopName, isVoiceEnrolled, enrollVoice } = useBilling();
+  const { setShopName, isVoiceEnrolled, enrollVoice, isLoading, shopName } = useBilling();
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
 
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-    if (isAuthenticated) {
+    // If loading is done and a shop name exists, the user is authenticated.
+    if (!isLoading && shopName) {
       router.push('/');
     }
-  }, [router]);
+  }, [isLoading, shopName, router]);
 
   const handleLogin = () => {
     if (shopNameInput.trim()) {
       setShopName(shopNameInput.trim());
-      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('isAuthenticated', 'true'); // Keep this for immediate feedback if needed
       router.push('/');
     }
   };
@@ -53,6 +53,14 @@ export default function LoginPage() {
         });
     }, 4000);
   };
+
+  if (isLoading) {
+      return (
+          <div className="flex h-screen items-center justify-center">
+              <p>Loading...</p>
+          </div>
+      );
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">

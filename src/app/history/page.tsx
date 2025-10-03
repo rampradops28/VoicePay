@@ -25,25 +25,20 @@ import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { history, deleteBill, isLoading } = useBilling();
+  const { history, deleteBill, isLoading, shopName } = useBilling();
   const { toast } = useToast();
   
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-      setIsAuthenticated(authStatus);
-      if (!authStatus) {
-        router.push('/login');
-      }
+    if (!isLoading && !shopName) {
+      router.push('/login');
     }
-  }, [isLoading, router]);
+  }, [isLoading, shopName, router]);
   
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || !shopName) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 

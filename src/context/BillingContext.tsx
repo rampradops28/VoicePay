@@ -120,6 +120,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         shopName: payload.shopName || '',
         history: hydratedHistory,
         isVoiceEnrolled: payload.isVoiceEnrolled || false,
+        // Don't hydrate current bill, start fresh
         items: [],
         totalAmount: 0,
       };
@@ -151,7 +152,9 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Effect to load state from localStorage on initial render
   useEffect(() => {
+    setIsLoading(true);
     try {
       const storedState = localStorage.getItem('billingState');
       if (storedState) {
@@ -160,11 +163,14 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Failed to load state from localStorage', error);
     } finally {
-        setIsLoading(false);
+        // Set loading to false after a short delay to allow rendering
+        setTimeout(() => setIsLoading(false), 50);
     }
   }, []);
 
+  // Effect to save state to localStorage whenever it changes
   useEffect(() => {
+    // Only save when not loading to avoid writing initial state
     if (!isLoading) {
       try {
         const stateToStore = {
@@ -179,7 +185,9 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [state.shopName, state.history, state.isVoiceEnrolled, isLoading]);
 
-  const setShopName = (name: string) => dispatch({ type: 'SET_SHOP_NAME', payload: name });
+  const setShopName = (name: string) => {
+    dispatch({ type: 'SET_SHOP_NAME', payload: name });
+  };
   
   const enrollVoice = () => dispatch({ type: 'ENROLL_VOICE' });
 
@@ -252,8 +260,20 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'DELETE_BILL', payload: billId });
   };
 
+  const value = {
+      ...state,
+      isLoading,
+      setShopName,
+      addItem,
+      removeItem,
+      resetBill,
+      saveBill,
+      deleteBill,
+      enrollVoice,
+  };
+
   return (
-    <BillingContext.Provider value={{ ...state, isLoading, setShopName, addItem, removeItem, resetBill, saveBill, deleteBill, enrollVoice }}>
+    <BillingContext.Provider value={value}>
       {children}
     </BillingContext.Provider>
   );

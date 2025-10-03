@@ -19,19 +19,13 @@ export default function BillingPage() {
   const { toast } = useToast();
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-      setIsAuthenticated(authStatus);
-      if (!authStatus) {
-        router.push('/login');
-      } else if (!shopName) {
-        router.push('/login');
-      }
+    // Wait until the context is done loading before checking auth state.
+    if (!isLoading && !shopName) {
+      router.push('/login');
     }
-  }, [isLoading, router, shopName]);
+  }, [isLoading, shopName, router]);
 
   const handleSendSmsClick = () => {
     if (items.length === 0) {
@@ -70,7 +64,7 @@ export default function BillingPage() {
     window.location.href = smsUri;
   };
 
-  if (isLoading || !isAuthenticated || !shopName) {
+  if (isLoading || !shopName) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
