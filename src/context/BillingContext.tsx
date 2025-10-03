@@ -9,7 +9,7 @@ interface BillingState {
   items: BillItem[];
   history: Bill[];
   totalAmount: number;
-  isVoiceEnrolled: boolean;
+  voiceprints: { [key: string]: boolean };
 }
 
 type Action =
@@ -21,22 +21,30 @@ type Action =
   | { type: 'DELETE_BILL'; payload: string }
   | { type: 'HYDRATE_STATE'; payload: Partial<BillingState> }
   | { type: 'CALCULATE_TOTAL' }
-  | { type: 'ENROLL_VOICE' };
+  | { type: 'ENROLL_VOICE'; payload: string }
+  | { type: 'REMOVE_VOICEPRINT'; payload: string };
 
 const initialState: BillingState = {
   ownerName: '',
   items: [],
   history: [],
   totalAmount: 0,
-  isVoiceEnrolled: false,
+  voiceprints: {},
 };
 
 const billingReducer = (state: BillingState, action: Action): BillingState => {
   switch (action.type) {
     case 'SET_OWNER_NAME':
       return { ...state, ownerName: action.payload };
-    case 'ENROLL_VOICE':
-      return { ...state, isVoiceEnrolled: true };
+    case 'ENROLL_VOICE': {
+        const newVoiceprints = { ...state.voiceprints, [action.payload]: true };
+        return { ...state, voiceprints: newVoiceprints };
+    }
+    case 'REMOVE_VOICEPRINT': {
+        const newVoiceprints = { ...state.voiceprints };
+        delete newVoiceprints[action.payload];
+        return { ...state, voiceprints: newVoiceprints };
+    }
     case 'ADD_ITEM': {
       const { name, quantity, unit, unitPrice } = action.payload;
       const existingItemIndex = state.items.findIndex(
@@ -119,7 +127,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         ...state, 
         ownerName: payload.ownerName || '',
         history: hydratedHistory,
-        isVoiceEnrolled: payload.isVoiceEnrolled || false,
+        voiceprints: payload.voiceprints || {},
         // Don't hydrate current bill, start fresh
         items: [],
         totalAmount: 0,
@@ -142,7 +150,8 @@ interface BillingContextType extends BillingState {
   resetBill: () => void;
   saveBill: () => void;
   deleteBill: (billId: string) => void;
-  enrollVoice: () => void;
+  enrollVoice: (ownerName: string) => void;
+  removeVoiceprint: (ownerName: string) => void;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -175,20 +184,27 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         const stateToStore = {
           ownerName: state.ownerName,
           history: state.history,
-          isVoiceEnrolled: state.isVoiceEnrolled,
+          voiceprints: state.voiceprints,
         };
         localStorage.setItem('billingState', JSON.stringify(stateToStore));
       } catch (error) {
         console.error('Failed to save state to localStorage', error);
       }
     }
-  }, [state.ownerName, state.history, state.isVoiceEnrolled, isLoading]);
+  }, [state.ownerName, state.history, state.voiceprints, isLoading]);
 
   const setOwnerName = (name: string) => {
     dispatch({ type: 'SET_OWNER_NAME', payload: name });
   };
   
-  const enrollVoice = () => dispatch({ type: 'ENROLL_VOICE' });
+  const enrollVoice = (ownerName: string) => {
+    if (!ownerName) return;
+    dispatch({ type: 'ENROLL_VOICE', payload: ownerName });
+  };
+
+  const removeVoiceprint = (ownerName: string) => {
+    dispatch({ type: 'REMOVE_VOICEPRINT', payload: ownerName });
+  };
 
   const addItem = (item: Omit<BillItem, 'id' | 'lineTotal'>) => {
     const existingItem = state.items.find(
@@ -269,6 +285,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
       saveBill,
       deleteBill,
       enrollVoice,
+      removeVoiceprint,
   };
 
   return (

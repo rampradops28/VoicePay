@@ -29,10 +29,13 @@ export default function VoiceInput() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const { addItem, removeItem, resetBill, saveBill, isVoiceEnrolled } = useBilling();
+  const { addItem, removeItem, resetBill, saveBill, voiceprints, ownerName } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
   const [isOnline, setIsOnline] = useState(true);
+
+  const isVoiceEnrolled = !!(ownerName && voiceprints[ownerName.toLowerCase()]);
+
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);

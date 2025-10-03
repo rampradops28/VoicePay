@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useBilling } from '@/context/BillingContext';
-import { Store, Mic, Fingerprint, CheckCircle2 } from 'lucide-react';
+import { Store, Mic, Fingerprint, CheckCircle2, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -16,10 +16,12 @@ import { useToast } from '@/hooks/use-toast';
 export default function LoginPage() {
   const [ownerNameInput, setOwnerNameInput] = useState('');
   const router = useRouter();
-  const { setOwnerName, isVoiceEnrolled, enrollVoice, isLoading, ownerName } = useBilling();
+  const { setOwnerName, voiceprints, enrollVoice, removeVoiceprint, isLoading, ownerName } = useBilling();
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
-
+  
+  const isCurrentVoiceEnrolled = voiceprints[ownerNameInput.trim().toLowerCase()];
+  const enrolledUsers = Object.keys(voiceprints);
 
   useEffect(() => {
     // If loading is done and a owner name exists, the user is authenticated.
@@ -36,6 +38,12 @@ export default function LoginPage() {
   };
   
   const handleVoiceEnrollment = () => {
+    const nameToEnroll = ownerNameInput.trim().toLowerCase();
+    if (!nameToEnroll) {
+        toast({ variant: 'destructive', title: 'Owner Name Required', description: 'Please enter an owner name before enrolling voice.' });
+        return;
+    }
+
     setIsRecording(true);
     toast({
         title: "Voice Enrollment Started",
@@ -45,12 +53,27 @@ export default function LoginPage() {
     // Simulate a recording process
     setTimeout(() => {
         setIsRecording(false);
-        enrollVoice();
+        enrollVoice(nameToEnroll);
         toast({
             title: "Voiceprint Created Successfully!",
-            description: "Your voice is now enrolled. You can use voice commands in the app.",
+            description: `Voiceprint for ${ownerNameInput.trim()} is now enrolled.`,
         });
     }, 4000);
+  };
+
+  const handleVoiceLogin = () => {
+    toast({
+      title: "Authenticating with Voice...",
+      description: "Please say 'My voice is my password'.",
+    });
+    // Simulate voice auth check
+    setTimeout(() => {
+      toast({
+        title: "Voice Verified!",
+        description: `Welcome back, ${ownerNameInput.trim()}!`,
+      });
+      handleLogin();
+    }, 3000);
   };
 
   if (isLoading) {
@@ -85,7 +108,7 @@ export default function LoginPage() {
             </TabsList>
             <TabsContent value="ownerName" className="mt-4">
                 <CardDescription className="text-center mb-4">
-                    Enter your name to start billing.
+                    Enter your name to start billing, or select an enrolled user below.
                 </CardDescription>
                 <div className="grid w-full items-center gap-4">
                     <div className="flex flex-col space-y-1.5">
@@ -99,26 +122,49 @@ export default function LoginPage() {
                     />
                     </div>
                 </div>
+                {enrolledUsers.length > 0 && (
+                    <div className="mt-4">
+                        <Label>Or select an enrolled user</Label>
+                        <div className="mt-2 space-y-2">
+                            {enrolledUsers.map(user => (
+                                <div key={user} className="flex items-center justify-between">
+                                    <Button variant="link" className="p-0 h-auto" onClick={() => setOwnerNameInput(user)}>
+                                        {user}
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                                        removeVoiceprint(user);
+                                        toast({ title: 'Voiceprint Removed', description: `Voiceprint for ${user} has been removed.`});
+                                    }}>
+                                        <Trash2 className="h-4 w-4 text-destructive"/>
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                  <Button className="w-full mt-4" onClick={handleLogin} disabled={!ownerNameInput.trim()}>
                     Start Billing
                 </Button>
             </TabsContent>
             <TabsContent value="voice">
               <div className="flex flex-col items-center justify-center text-center p-4">
-                {isVoiceEnrolled ? (
+                {isCurrentVoiceEnrolled ? (
                   <>
                     <CardDescription className="mb-4">
-                      Your voice is enrolled and ready for secure voice commands.
+                      A voiceprint for '{ownerNameInput.trim()}' is enrolled. Log in with your voice.
                     </CardDescription>
                     <div className="relative flex items-center justify-center h-32 w-32 rounded-full border-4 border-dashed border-green-500">
                       <CheckCircle2 className="h-16 w-16 text-green-500" />
                     </div>
-                    <p className="text-green-600 font-medium mt-4">Voice Enrolled</p>
+                    <Button className="w-full mt-6" onClick={handleVoiceLogin}>
+                        Login with Voice
+                        <Mic className="ml-2 h-4 w-4" />
+                    </Button>
                   </>
                 ) : (
                   <>
                     <CardDescription className="mb-4">
-                      Enroll your voice to use voice commands securely. Only your voice will be recognized.
+                      Enter your name, then enroll your voice to use voice commands securely.
                     </CardDescription>
                     <div 
                         className={cn(
@@ -131,7 +177,7 @@ export default function LoginPage() {
                             <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"></div>
                         )}
                     </div>
-                    <Button className="w-full mt-6" onClick={handleVoiceEnrollment} disabled={isRecording}>
+                    <Button className="w-full mt-6" onClick={handleVoiceEnrollment} disabled={isRecording || !ownerNameInput.trim()}>
                       {isRecording ? 'Recording...' : 'Enroll My Voice'}
                       {!isRecording && <Mic className="ml-2 h-4 w-4" />}
                     </Button>
