@@ -108,7 +108,7 @@ export const parseCommand = (command: string): ParsedCommand | null => {
           item: itemName,
           quantity: quantity,
           unit: unit || 'pcs', // Default to 'pcs' if no unit was parsed
-          price: price / quantity, // Calculate unit price from total price
+          price: price, // The price is the unit price
         },
       };
     }
