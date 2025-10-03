@@ -201,7 +201,7 @@ export default function VoiceInput() {
     }
   }, [toast, processCommand]);
 
-  const handleMicClick = () => {
+  const handleMicClick = async () => {
     if (!isOnline) {
       toast({
         variant: 'destructive',
@@ -227,11 +227,28 @@ export default function VoiceInput() {
 
     if (isRecording) {
       recognitionRef.current.stop();
-      setIsRecording(false); // Update UI immediately
-    } else {
-      setCommand(''); // Clear previous command
+      return;
+    }
+
+    try {
+      // Explicitly request microphone permission on click
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // We can immediately stop the tracks as we only needed to trigger the permission prompt.
+      // The Web Speech API handles the microphone stream itself.
+      stream.getTracks().forEach(track => track.stop());
+
+      // Now that we have permission, start recognition.
+      setCommand('');
       setSuggestions([]);
       recognitionRef.current.start();
+      
+    } catch (err) {
+      console.error("Microphone permission error:", err);
+      toast({
+        variant: "destructive",
+        title: "Microphone Access Denied",
+        description: "Voice commands require microphone access. Please enable it in your browser or app settings."
+      });
     }
   };
 
