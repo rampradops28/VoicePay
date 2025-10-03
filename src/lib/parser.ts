@@ -14,6 +14,9 @@ const unitMap: { [key: string]: string } = {
   liters: 'ltr',
   gram: 'g',
   grams: 'g',
+  ml: 'ml',
+  millilitre: 'ml',
+  milliliter: 'ml',
 };
 
 const normalizeUnit = (unit: string): string => {
@@ -37,62 +40,53 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     };
   }
 
-  // Rule: "calculate total" or "kanak" or "total"
-  if (cmd === 'calculate total' || cmd === 'kanak' || cmd === 'total' || cmd === 'calculate') {
-    return { action: 'calculate', payload: null };
-  }
-
-  // Rule: "reset bill" or "reset"
-  if (cmd === 'reset bill' || cmd === 'reset') {
+  // Rule: "clear bill" or "reset bill"
+  if (cmd.includes('clear bill') || cmd.includes('reset bill')) {
     return { action: 'reset', payload: null };
   }
 
-  // Flexible "add" command parsing
-  const addRegex = /^(?:add|ad)\s+(.+)/i;
-  const addMatch = cmd.match(addRegex);
+  // Rule: "What's the total?" or "save bill"
+  if (cmd.includes('total') || cmd.includes('save bill')) {
+    return { action: 'calculate', payload: null };
+  }
 
+  // Rule: "Add {qty} {item} at {price} rupees" OR "Add {item} {qty}{unit} {price} rupees"
+  const addRegex = /^add\s+(.+)/i;
+  const addMatch = cmd.match(addRegex);
   if (addMatch) {
     let content = addMatch[1];
-    
-    // 1. Extract price
-    const priceRegex = /(\d+(\.\d+)?)\s*(?:rs|rupees)\b/i;
+
+    // Extract price: "at X rupees" or just "X rupees"
+    const priceRegex = /(?:at\s+)?(\d+(\.\d+)?)\s*(?:rs|rupees)?$/i;
     const priceMatch = content.match(priceRegex);
     let price: number | null = null;
     if (priceMatch) {
       price = parseFloat(priceMatch[1]);
-      content = content.replace(priceMatch[0], '').trim();
+      content = content.replace(priceRegex, '').trim();
     }
-
-    // 2. Extract quantity and unit
-    const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?)\b/i;
+    
+    // Extract quantity and unit: "X kg", "X ml", etc.
+    const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?|ml|millilitre|milliliter)\b/i;
     const qtyUnitMatch = content.match(qtyUnitRegex);
     let quantity: number | null = null;
     let unit: string = '';
     if (qtyUnitMatch) {
         quantity = parseFloat(qtyUnitMatch[1]);
         unit = normalizeUnit(qtyUnitMatch[3]);
-        content = content.replace(qtyUnitMatch[0], '').trim();
+        content = content.replace(qtyUnitRegex, '').trim();
     }
 
-    // 3. The rest is the item name. Handle numbers that might be quantity or part of the item name.
-    const parts = content.split(/\s+/).filter(Boolean);
-    const itemParts: string[] = [];
-
-    for (const part of parts) {
-        // If quantity is still missing, and we haven't found a price yet, a standalone number is likely the quantity
-        if (quantity === null && /^\d+(\.\d+)?$/.test(part) && price === null) {
-            quantity = parseFloat(part);
-        } 
-        // If price is missing, a standalone number is likely the price
-        else if (price === null && /^\d+(\.\d+)?$/.test(part)) {
-            price = parseFloat(part);
-        }
-        else {
-            itemParts.push(part);
-        }
+    // Check for quantity at the start (e.g., "Add 2 rice")
+    if (quantity === null) {
+      const leadingQtyRegex = /^(\d+(\.\d+)?)\s+/;
+      const leadingQtyMatch = content.match(leadingQtyRegex);
+      if (leadingQtyMatch) {
+        quantity = parseFloat(leadingQtyMatch[1]);
+        content = content.replace(leadingQtyRegex, '').trim();
+      }
     }
 
-    const itemName = itemParts.join(' ').trim();
+    const itemName = content.replace(/at$/, '').trim();
 
     if (itemName && quantity !== null && price !== null) {
       return {
@@ -100,7 +94,7 @@ export const parseCommand = (command: string): ParsedCommand | null => {
         payload: {
           item: itemName,
           quantity: quantity,
-          unit: unit || 'pcs', // Default to 'pcs' if no unit is specified
+          unit: unit || 'pcs', // Default to 'pcs'
           price: price,
         },
       };
