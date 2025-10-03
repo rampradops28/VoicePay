@@ -31,7 +31,6 @@ export default function LoginPage() {
   const handleLogin = () => {
     if (shopNameInput.trim()) {
       setShopName(shopNameInput.trim());
-      localStorage.setItem('isAuthenticated', 'true'); // Keep this for immediate feedback if needed
       router.push('/');
     }
   };

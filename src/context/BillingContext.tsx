@@ -163,8 +163,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Failed to load state from localStorage', error);
     } finally {
-        // Set loading to false after a short delay to allow rendering
-        setTimeout(() => setIsLoading(false), 50);
+        setIsLoading(false);
     }
   }, []);
 
@@ -187,6 +186,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   const setShopName = (name: string) => {
     dispatch({ type: 'SET_SHOP_NAME', payload: name });
+    localStorage.setItem('isAuthenticated', 'true');
   };
   
   const enrollVoice = () => dispatch({ type: 'ENROLL_VOICE' });
