@@ -20,8 +20,7 @@ export default function Header() {
 
   const navItems = [
     { href: '/', label: 'Billing' },
-    { href: '/history', label: 'History' },
-    { href: '/analytics', label: 'Analytics' },
+    { href: '/history', label: 'History & Analytics' },
   ];
 
   return (
