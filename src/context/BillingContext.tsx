@@ -80,7 +80,6 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       let newItems;
 
       if (existingItemIndex !== -1) {
-        // Item exists, so we replace it.
         newItems = [...state.items];
         newItems[existingItemIndex] = {
           ...newItems[existingItemIndex],
@@ -90,7 +89,6 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
           lineTotal: parseFloat((quantity * unitPrice).toFixed(2)),
         };
       } else {
-        // It's a new item, add it to the list.
         const newItem: BillItem = {
           id: new Date().toISOString() + Math.random(),
           name,
@@ -287,10 +285,12 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   const removeItem = (itemName: string) => {
     if (!itemName) return;
+    
+    // Find the item in the current state to confirm it exists and get proper casing for the toast message.
     const itemToRemove = state.items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
 
     if (itemToRemove) {
-      dispatch({ type: 'REMOVE_ITEM', payload: itemToRemove.name });
+      dispatch({ type: 'REMOVE_ITEM', payload: itemName });
       toast({
         title: 'Item Removed',
         description: `${itemToRemove.name} has been removed from the bill.`,
@@ -367,3 +367,5 @@ export const useBilling = () => {
   }
   return context;
 };
+
+    
