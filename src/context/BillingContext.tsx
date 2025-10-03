@@ -31,7 +31,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     case 'ADD_ITEM': {
       const newItem: BillItem = {
         ...action.payload,
-        id: new Date().toISOString(),
+        id: new Date().toISOString() + Math.random(), // Add random number to ensure unique id
         lineTotal: parseFloat((action.payload.quantity * (action.payload.unitPrice || 0)).toFixed(2)),
       };
       return { ...state, items: [...state.items, newItem] };
@@ -133,12 +133,14 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetBill = useCallback(() => {
-    dispatch({ type: 'RESET_BILL' });
-    toast({
-        title: 'Bill Cleared',
-        description: 'The current bill has been reset.',
-    });
-  }, [toast]);
+    if (state.items.length > 0) {
+      dispatch({ type: 'RESET_BILL' });
+      toast({
+          title: 'Bill Cleared',
+          description: 'The current bill has been reset.',
+      });
+    }
+  }, [toast, state.items.length]);
   
   const saveBill = useCallback(() => {
     if (state.items.length > 0) {

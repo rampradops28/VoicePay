@@ -31,6 +31,7 @@ export default function VoiceInput() {
   const { addItem, removeItem, resetBill, saveBill } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchSuggestions = useCallback(async (partialCommand: string) => {
     if (partialCommand.length < 3) {
@@ -64,14 +65,16 @@ export default function VoiceInput() {
   };
   
   const processCommand = useCallback((cmd: string) => {
-    if (!cmd.trim()) return;
+    const commandToProcess = cmd.trim();
+    if (!commandToProcess) return;
 
-    const parsed = parseCommand(cmd);
+    const parsed = parseCommand(commandToProcess);
+
     if (!parsed) {
         toast({
             variant: 'destructive',
             title: 'Invalid Command',
-            description: 'The command was not recognized. Please use a valid format.',
+            description: `Could not understand "${commandToProcess}". Please try again.`,
         });
         return;
     }
@@ -111,26 +114,27 @@ export default function VoiceInput() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
+      recognition.continuous = false; // Process after a single utterance
       recognition.lang = 'en-IN';
       recognition.interimResults = true;
 
       recognition.onstart = () => setIsRecording(true);
+      
       recognition.onend = () => {
         setIsRecording(false);
       };
+
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
-        if (event.error !== 'aborted') {
-          toast({ variant: 'destructive', title: 'Voice Error', description: event.error === 'no-speech' ? 'No speech detected.' : event.error });
+        if (event.error !== 'aborted' && event.error !== 'no-speech') {
+          toast({ variant: 'destructive', title: 'Voice Error', description: `An error occurred: ${event.error}` });
         }
         setIsRecording(false);
       };
       
-      let finalTranscript = '';
       recognition.onresult = (event: any) => {
         let interimTranscript = '';
-        finalTranscript = ''; // Reset final transcript on new result
+        let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
@@ -138,11 +142,19 @@ export default function VoiceInput() {
             interimTranscript += event.results[i][0].transcript;
           }
         }
+        
         setCommand(finalTranscript + interimTranscript);
+
+        // If we have a final transcript, process it.
+        if (finalTranscript.trim()) {
+           processCommand(finalTranscript.trim());
+           // Stop recognition after a command is processed
+           recognition.stop();
+        }
       };
       recognitionRef.current = recognition;
     }
-  }, [toast]);
+  }, [toast, processCommand]);
 
   const handleMicClick = () => {
     if (!recognitionRef.current) {
@@ -151,12 +163,8 @@ export default function VoiceInput() {
     }
     if (isRecording) {
       recognitionRef.current.stop();
-      // The onend event will set isRecording to false
-      // And we process the command with the final transcript
-      if(command.trim()){
-        processCommand(command);
-      }
     } else {
+      setCommand(''); // Clear previous command
       recognitionRef.current.start();
     }
   };
@@ -170,7 +178,7 @@ export default function VoiceInput() {
           Voice Command
         </CardTitle>
         <CardDescription>
-          Tap the mic to start/stop recording. Speak your command.
+          Tap the mic, speak your command, and it will be processed automatically.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -203,7 +211,7 @@ export default function VoiceInput() {
                   <li key={i}>
                     <button
                       onClick={() => {
-                        setCommand(s);
+                        processCommand(s);
                         setSuggestions([]);
                       }}
                       className="text-left w-full p-2 text-sm rounded-md hover:bg-secondary"
