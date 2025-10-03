@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from 'recharts';
 import { useBilling } from '@/context/BillingContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { TrendingUp, Star, IndianRupee, ScrollText, CheckCircle } from 'lucide-react';
+import { Star, IndianRupee, ScrollText, CheckCircle } from 'lucide-react';
 import type { BillItem, Bill } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 
@@ -88,7 +88,7 @@ export default function AnalyticsDashboard() {
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2">
-                <TrendingUp /> Sales Analytics
+                 Sales Analytics
                 </CardTitle>
                 <CardDescription>Insights from your billing history.</CardDescription>
             </CardHeader>
