@@ -69,31 +69,29 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     case 'ADD_ITEM': {
       const { name, quantity, unit, unitPrice } = action.payload;
       const existingItemIndex = state.items.findIndex(
-        item => item.name.toLowerCase() === name.toLowerCase()
+        (item) => item.name.toLowerCase() === name.toLowerCase()
       );
 
       let newItems;
 
-      if (existingItemIndex > -1) {
-        newItems = state.items.map((item, index) => {
-          if (index === existingItemIndex) {
-            return {
-              ...item,
-              quantity: quantity,
-              unit: unit,
-              unitPrice: unitPrice,
-              lineTotal: parseFloat((quantity * unitPrice).toFixed(2)),
-            };
-          }
-          return item;
-        });
+      if (existingItemIndex !== -1) {
+        // Item exists, so we replace it.
+        newItems = [...state.items];
+        newItems[existingItemIndex] = {
+          ...state.items[existingItemIndex],
+          quantity,
+          unit,
+          unitPrice,
+          lineTotal: parseFloat((quantity * unitPrice).toFixed(2)),
+        };
       } else {
+        // It's a new item, add it to the list.
         const newItem: BillItem = {
           id: new Date().toISOString() + Math.random(),
-          name: name,
-          quantity: quantity,
-          unit: unit,
-          unitPrice: unitPrice,
+          name,
+          quantity,
+          unit,
+          unitPrice,
           lineTotal: parseFloat((quantity * unitPrice).toFixed(2)),
         };
         newItems = [...state.items, newItem];
