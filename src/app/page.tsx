@@ -7,11 +7,12 @@ import Header from '@/components/Header';
 import VoiceInput from '@/components/VoiceInput';
 import BillingTable from '@/components/BillingTable';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, MessageSquareText, Save } from 'lucide-react';
+import { RotateCcw, MessageSquareText, Save, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function BillingPage() {
   const router = useRouter();
@@ -82,8 +83,39 @@ export default function BillingPage() {
         <Header />
         <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-8">
               <VoiceInput />
+              <Card className="no-print">
+                <CardHeader>
+                  <CardTitle className="font-headline flex items-center gap-2">
+                    <HelpCircle className="text-primary" />
+                    Command Guide
+                  </CardTitle>
+                  <CardDescription>
+                    Use these voice commands to manage your bill.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <div>
+                    <h4 className="font-semibold text-foreground">Add an Item</h4>
+                    <p className="text-muted-foreground">"add [item name] [quantity] [price]"</p>
+                    <p className="text-xs text-muted-foreground/80">e.g., "add tomato 2kg 50rs"</p>
+                  </div>
+                   <div>
+                    <h4 className="font-semibold text-foreground">Remove an Item</h4>
+                    <p className="text-muted-foreground">"remove [item name]"</p>
+                    <p className="text-xs text-muted-foreground/80">e.g., "remove tomato"</p>
+                  </div>
+                   <div>
+                    <h4 className="font-semibold text-foreground">Save Bill</h4>
+                    <p className="text-muted-foreground">"save bill" or "total" or "kanak"</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground">Reset Bill</h4>
+                    <p className="text-muted-foreground">"reset bill" or "clear bill"</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             <div className="lg:col-span-3">
               <BillingTable />
