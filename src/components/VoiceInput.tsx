@@ -10,6 +10,7 @@ import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Wand2, Loader2 } from 'lucide-react';
+import { verifyVoice } from '@/ai/flows/verify-voice';
 
 // Debounce function
 const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
@@ -87,12 +88,13 @@ export default function VoiceInput() {
   };
 
   const processCommand = useCallback(
-    (cmd: string) => {
+    async (cmd: string, audioDataUri?: string) => {
       const commandToProcess = cmd.trim();
       if (!commandToProcess) return;
 
       console.log(`Processing command: "${commandToProcess}"`);
 
+      // Simulate impostor detection for demo purposes
       if (isVoiceEnrolled && commandToProcess.toLowerCase().includes('impostor')) {
         toast({
           variant: 'destructive',
@@ -102,6 +104,21 @@ export default function VoiceInput() {
         setCommand('');
         setSuggestions([]);
         return;
+      }
+      
+      // In a real app, you'd send the audio to a backend for verification
+      if (isVoiceEnrolled && audioDataUri && ownerName) {
+        const verificationResult = await verifyVoice({ ownerName, audioDataUri });
+        if (!verificationResult.isVerified) {
+             toast({
+                variant: 'destructive',
+                title: 'Voice Not Verified',
+                description: 'Could not verify your voice. Please try again.',
+             });
+             setCommand('');
+             setSuggestions([]);
+             return;
+        }
       }
 
       const parsed = parseCommand(commandToProcess);
@@ -145,7 +162,7 @@ export default function VoiceInput() {
       setCommand('');
       setSuggestions([]);
     },
-    [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled]
+    [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled, ownerName]
   );
 
   const handleSubmit = (e: FormEvent) => {
@@ -163,12 +180,11 @@ export default function VoiceInput() {
     }
     
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
+    recognition.continuous = false; // Stop after a pause
     recognition.lang = 'en-IN';
     recognition.interimResults = true;
 
     recognition.onstart = () => setIsRecording(true);
-    recognition.onend = () => setIsRecording(false);
     
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
@@ -176,6 +192,10 @@ export default function VoiceInput() {
         toast({ variant: 'destructive', title: 'Voice Error', description: `An error occurred: ${event.error}` });
       }
       setIsRecording(false);
+    };
+    
+    recognition.onend = () => {
+        setIsRecording(false);
     };
 
     let finalTranscript = '';
@@ -188,11 +208,17 @@ export default function VoiceInput() {
           interimTranscript += event.results[i][0].transcript;
         }
       }
-      setCommand(finalTranscript.trim() || interimTranscript);
+      const fullTranscript = (finalTranscript || interimTranscript).trim();
+      setCommand(fullTranscript);
+
+      if (event.results[event.results.length - 1].isFinal) {
+        // Here you could capture audio chunk if you were to implement real voice verification
+        processCommand(fullTranscript);
+      }
     };
 
     return recognition;
-  }, [toast]);
+  }, [toast, processCommand]);
 
   const handleMicClick = async () => {
     if (!isOnline) {
@@ -207,11 +233,6 @@ export default function VoiceInput() {
     
     if (isRecording && recognitionRef.current) {
       recognitionRef.current.stop();
-      // Process the final command when stopping
-      if(command.trim()){
-        const commands = command.trim().split(/\s+and\s+/);
-        commands.forEach(cmd => processCommand(cmd));
-      }
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -263,7 +284,7 @@ export default function VoiceInput() {
             onClick={handleMicClick}
             className={cn('mic-ripple', isRecording && 'recording')}
             disabled={!isVoiceEnrolled || !isOnline}
-            title={!isOnline ? 'Voice commands are disabled while offline' : 'Start voice command'}
+            title={!isOnline ? 'Voice commands are disabled while offline' : (isRecording ? 'Stop listening' : 'Start voice command')}
           >
             {!isOnline ? <WifiOff /> : <Mic />}
           </Button>
