@@ -38,7 +38,7 @@ export default function HistoryPage() {
     }
   }, [isLoading, shopName, router]);
   
-  if (isLoading || !shopName) {
+  if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 

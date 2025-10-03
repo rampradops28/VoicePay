@@ -154,7 +154,6 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to load state from localStorage on initial render
   useEffect(() => {
-    setIsLoading(true);
     try {
       const storedState = localStorage.getItem('billingState');
       if (storedState) {
