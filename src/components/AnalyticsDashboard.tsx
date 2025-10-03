@@ -30,8 +30,8 @@ export default function AnalyticsDashboard() {
 
     history.forEach(bill => {
       bill.items.forEach(item => {
-        // Normalize item name by removing unit information if present
-        const normalizedName = item.name.replace(new RegExp(`\\s${item.unit}$`, 'i'), '').trim();
+        // Normalize item name by taking the first word. This groups "sugar" and "sugar packet".
+        const normalizedName = item.name.split(' ')[0];
         const key = normalizedName.toLowerCase();
         
         if (!productSales[key]) {
