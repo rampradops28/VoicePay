@@ -54,15 +54,15 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       let newItems;
 
       if (existingItemIndex > -1) {
-        // Item exists, update it
+        // Item exists, replace it
         newItems = state.items.map((item, index) => {
           if (index === existingItemIndex) {
-            const newQuantity = item.quantity + quantity;
             return {
               ...item,
-              quantity: newQuantity,
+              quantity: quantity, // Replace quantity
+              unit: unit, // Replace unit
               unitPrice: unitPrice, // Update to the latest price
-              lineTotal: parseFloat((newQuantity * unitPrice).toFixed(2)),
+              lineTotal: parseFloat((quantity * unitPrice).toFixed(2)),
             };
           }
           return item;
@@ -215,8 +215,8 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     
     if (existingItem) {
         toast({
-            title: 'Item Updated',
-            description: `${item.name}'s quantity has been updated.`,
+            title: 'Item Replaced',
+            description: `${item.name} has been updated to ${item.quantity}${item.unit} at Rs ${item.unitPrice.toFixed(2)} each.`,
         });
     } else {
         toast({

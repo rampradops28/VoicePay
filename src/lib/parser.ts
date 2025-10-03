@@ -17,6 +17,8 @@ const unitMap: { [key: string]: string } = {
   ml: 'ml',
   millilitre: 'ml',
   milliliter: 'ml',
+  packet: 'pkt',
+  packets: 'pkt',
 };
 
 const normalizeUnit = (unit: string): string => {
@@ -25,37 +27,25 @@ const normalizeUnit = (unit: string): string => {
   return unitMap[lowerUnit] || lowerUnit;
 };
 
-// Function to remove leading articles like "a" or "an"
-const stripArticle = (text: string): string => {
-  return text.replace(/^(a|an)\s+/i, '').trim();
+// Function to remove leading articles and noise words
+const stripLeadingNoise = (text: string): string => {
+  // Matches words like "a", "an", "add", "at", "had" at the start of the string
+  return text.replace(/^(a|an|add|at|had)\s+/i, '').trim();
 };
 
 
 export const parseCommand = (command: string): ParsedCommand[] | null => {
   const cmd = command.toLowerCase().trim();
 
-  // Split command by "and" or "add" to handle chained commands
-  const commandSegments = cmd.split(/\s+(?:and|add)\s+/i);
+  // Split command by "and" to handle chained commands
+  // We make the split more robust to handle extra spaces.
+  const commandSegments = cmd.split(/\s+and\s+/i);
   
   const parsedCommands: ParsedCommand[] = [];
-
-  // Always prepend "add" to the first segment if it's not a special command
-  const firstSegment = commandSegments[0].trim();
-  if (!/^(remove|delete|cancel|clear|reset|save|total|kanak)/.test(firstSegment)) {
-      if (!firstSegment.startsWith('add')) {
-        commandSegments[0] = 'add ' + firstSegment;
-      }
-  }
-
 
   for (let segment of commandSegments) {
     segment = segment.trim();
     if (!segment) continue;
-
-    // Re-add "add" if it was stripped by the split, for subsequent segments
-    if (!/^(add|remove|delete|cancel|clear|reset|save|total|kanak)/.test(segment)) {
-      segment = 'add ' + segment;
-    }
 
     // Rule: "remove <item>"
     const removeRegex = /^(?:remove|delete|cancel)\s+(.+)$/i;
@@ -64,7 +54,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       parsedCommands.push({
         action: 'remove',
         payload: {
-          item: stripArticle(removeMatch[1].trim()),
+          item: stripLeadingNoise(removeMatch[1].trim()),
         },
       });
       continue;
@@ -88,67 +78,63 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       continue;
     }
 
-    const addRegex = /^add\s+(.+)/i;
-    const addMatch = segment.match(addRegex);
-    if (addMatch) {
-      let content = addMatch[1];
-      let price: number | null = null;
-      let quantity: number | null = null;
-      let unit: string = '';
+    // If it's not a special command, assume it's an "add" command.
+    let content = segment;
+    let price: number | null = null;
+    let quantity: number | null = null;
+    let unit: string = '';
 
-      const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees))/i;
-      const priceMatch = content.match(priceRegex);
+    const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees))/i;
+    const priceMatch = content.match(priceRegex);
 
-      if (priceMatch) {
-        price = parseFloat(priceMatch[1]);
-        content = content.replace(priceRegex, '').trim();
+    if (priceMatch) {
+      price = parseFloat(priceMatch[1]);
+      content = content.replace(priceRegex, '').trim();
+    }
+    
+    const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)?\b/i;
+    const qtyUnitMatch = content.match(qtyUnitRegex);
+    
+    if (qtyUnitMatch) {
+      quantity = parseFloat(qtyUnitMatch[1]);
+      if (qtyUnitMatch[3]) {
+        unit = normalizeUnit(qtyUnitMatch[3]);
       }
-      
-      // Regex to capture a number and an optional following word (as the unit)
-      const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)?\b/i;
-      const qtyUnitMatch = content.match(qtyUnitRegex);
-      
-      if (qtyUnitMatch) {
-        quantity = parseFloat(qtyUnitMatch[1]);
-        if (qtyUnitMatch[3]) {
-          unit = normalizeUnit(qtyUnitMatch[3]);
-        }
-        content = content.replace(qtyUnitRegex, '').trim();
-      }
+      content = content.replace(qtyUnitRegex, '').trim();
+    }
 
-      if (quantity === null) {
-        const standaloneQtyRegex = /^\s*(\d+(\.\d+)?)\b/;
-        const standaloneQtyMatch = content.match(standaloneQtyRegex);
-        if (standaloneQtyMatch) {
-          quantity = parseFloat(standaloneQtyMatch[1]);
-          content = content.replace(standaloneQtyRegex, '').trim();
-        }
+    if (quantity === null) {
+      const standaloneQtyRegex = /^\s*(\d+(\.\d+)?)\b/;
+      const standaloneQtyMatch = content.match(standaloneQtyRegex);
+      if (standaloneQtyMatch) {
+        quantity = parseFloat(standaloneQtyMatch[1]);
+        content = content.replace(standaloneQtyRegex, '').trim();
       }
-      
-      if (price === null) {
-        const standalonePriceRegex = /(\d+(\.\d+)?)\s*$/;
-        const standalonePriceMatch = content.match(standalonePriceRegex);
-        if(standalonePriceMatch){
-          price = parseFloat(standalonePriceMatch[1]);
-          content = content.replace(standalonePriceRegex, '').trim();
-        }
+    }
+    
+    if (price === null) {
+      const standalonePriceRegex = /(\d+(\.\d+)?)\s*$/;
+      const standalonePriceMatch = content.match(standalonePriceRegex);
+      if(standalonePriceMatch){
+        price = parseFloat(standalonePriceMatch[1]);
+        content = content.replace(standalonePriceRegex, '').trim();
       }
-      
-      const rawItemName = content.replace(/\s+/g, ' ').trim();
-      const itemName = stripArticle(rawItemName);
+    }
+    
+    const rawItemName = content.replace(/\s+/g, ' ').trim();
+    const itemName = stripLeadingNoise(rawItemName);
 
-      if (itemName && quantity !== null && price !== null) {
-        parsedCommands.push({
-          action: 'add',
-          payload: {
-            item: itemName,
-            quantity: quantity,
-            unit: unit || 'pcs', 
-            price: price, // price is now unitPrice
-          },
-        });
-        continue;
-      }
+    if (itemName && quantity !== null && price !== null) {
+      parsedCommands.push({
+        action: 'add',
+        payload: {
+          item: itemName,
+          quantity: quantity,
+          unit: unit || 'pcs', 
+          price: price, // price is now unitPrice
+        },
+      });
+      continue;
     }
   }
 
