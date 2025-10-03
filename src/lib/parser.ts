@@ -79,39 +79,27 @@ export const parseCommand = (command: string): ParsedCommand | null => {
       content = content.replace(qtyUnitRegex, '').trim();
     }
 
-    // If quantity is still null, look for a number that could be quantity or price
-    const numberRegex = /(\d+(\.\d+)?)/;
-    const numberMatches = content.match(new RegExp(numberRegex, 'g')) || [];
-
-    for (const matchStr of numberMatches) {
-        const numMatch = matchStr.match(numberRegex);
-        if (numMatch) {
-            const num = parseFloat(numMatch[1]);
-            // If we found quantity but not price, maybe this is price
-            if(quantity !== null && price === null) {
-                price = num;
-                content = content.replace(numMatch[0], '').trim();
-            } 
-            // If we found price but not quantity, maybe this is quantity
-            else if (price !== null && quantity === null) {
-                quantity = num;
-                content = content.replace(numMatch[0], '').trim();
-            }
-        }
-    }
-
-    // Fallback: If quantity is still not found, check for a number without a unit
+    // If quantity is still null, look for a standalone number that could be quantity
     if (quantity === null) {
-      const qtyRegex = /\s(\d+(\.\d+)?)$/i;
-      const qtyMatch = content.match(qtyRegex);
-      if (qtyMatch) {
-        quantity = parseFloat(qtyMatch[1]);
-        content = content.replace(qtyRegex, '').trim();
+      const standaloneQtyRegex = /\b(\d+(\.\d+)?)\b(?!s*rs|s*rupees)/i;
+      const standaloneQtyMatch = content.match(standaloneQtyRegex);
+      if (standaloneQtyMatch) {
+        quantity = parseFloat(standaloneQtyMatch[1]);
+        content = content.replace(standaloneQtyRegex, '').trim();
       }
     }
-
-
-    const itemName = content.trim();
+    
+    // If price is still null, look for a standalone number that could be price
+    if (price === null) {
+      const standalonePriceRegex = /(\d+(\.\d+)?)/;
+      const standalonePriceMatch = content.match(standalonePriceRegex);
+      if(standalonePriceMatch){
+        price = parseFloat(standalonePriceMatch[1]);
+        content = content.replace(standalonePriceRegex, '').trim();
+      }
+    }
+    
+    const itemName = content.replace(/\s+/g, ' ').trim();
 
     if (itemName && quantity !== null && price !== null) {
       return {
