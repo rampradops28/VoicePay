@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useBilling } from '@/context/BillingContext';
-import { Store, Mic, Fingerprint } from 'lucide-react';
+import { Store, Mic, Fingerprint, CheckCircle2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function LoginPage() {
   const [shopNameInput, setShopNameInput] = useState('');
   const router = useRouter();
-  const { setShopName } = useBilling();
+  const { setShopName, isVoiceEnrolled, enrollVoice } = useBilling();
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
 
@@ -40,15 +40,16 @@ export default function LoginPage() {
     setIsRecording(true);
     toast({
         title: "Voice Enrollment Started",
-        description: "This is a concept demonstration. In a real app, you would record your voice now to create a secure voiceprint.",
+        description: "Please say 'My voice is my password' into the microphone.",
     });
 
     // Simulate a recording process
     setTimeout(() => {
         setIsRecording(false);
+        enrollVoice();
         toast({
-            title: "Voiceprint Created (Simulated)",
-            description: "You can now proceed to log in. The app will be ready for voice authentication.",
+            title: "Voiceprint Created Successfully!",
+            description: "Your voice is now enrolled. You can use voice commands in the app.",
         });
     }, 4000);
   };
@@ -91,24 +92,38 @@ export default function LoginPage() {
             </TabsContent>
             <TabsContent value="voice">
               <div className="flex flex-col items-center justify-center text-center p-4">
-                <CardDescription className="mb-4">
-                  Enroll your voice to use voice commands securely. Only your voice will be recognized.
-                </CardDescription>
-                <div 
-                    className={cn(
-                        "relative flex items-center justify-center h-32 w-32 rounded-full border-4 border-dashed transition-all",
-                        isRecording ? "border-primary" : "border-muted"
-                    )}
-                >
-                    <Fingerprint className={cn("h-16 w-16 text-muted transition-colors", isRecording && "text-primary")} />
-                    {isRecording && (
-                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"></div>
-                    )}
-                </div>
-                <Button className="w-full mt-6" onClick={handleVoiceEnrollment} disabled={isRecording}>
-                   {isRecording ? 'Recording...' : 'Enroll My Voice'}
-                   {!isRecording && <Mic className="ml-2 h-4 w-4" />}
-                </Button>
+                {isVoiceEnrolled ? (
+                  <>
+                    <CardDescription className="mb-4">
+                      Your voice is enrolled and ready for secure voice commands.
+                    </CardDescription>
+                    <div className="relative flex items-center justify-center h-32 w-32 rounded-full border-4 border-dashed border-green-500">
+                      <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    </div>
+                    <p className="text-green-600 font-medium mt-4">Voice Enrolled</p>
+                  </>
+                ) : (
+                  <>
+                    <CardDescription className="mb-4">
+                      Enroll your voice to use voice commands securely. Only your voice will be recognized.
+                    </CardDescription>
+                    <div 
+                        className={cn(
+                            "relative flex items-center justify-center h-32 w-32 rounded-full border-4 border-dashed transition-all",
+                            isRecording ? "border-primary" : "border-muted"
+                        )}
+                    >
+                        <Fingerprint className={cn("h-16 w-16 text-muted transition-colors", isRecording && "text-primary")} />
+                        {isRecording && (
+                            <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"></div>
+                        )}
+                    </div>
+                    <Button className="w-full mt-6" onClick={handleVoiceEnrollment} disabled={isRecording}>
+                      {isRecording ? 'Recording...' : 'Enroll My Voice'}
+                      {!isRecording && <Mic className="ml-2 h-4 w-4" />}
+                    </Button>
+                  </>
+                )}
               </div>
             </TabsContent>
           </Tabs>

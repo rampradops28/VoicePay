@@ -9,6 +9,7 @@ interface BillingState {
   items: BillItem[];
   history: Bill[];
   totalAmount: number;
+  isVoiceEnrolled: boolean;
 }
 
 type Action =
@@ -19,19 +20,23 @@ type Action =
   | { type: 'SAVE_BILL' }
   | { type: 'DELETE_BILL'; payload: string }
   | { type: 'HYDRATE_STATE'; payload: Partial<BillingState> }
-  | { type: 'CALCULATE_TOTAL' };
+  | { type: 'CALCULATE_TOTAL' }
+  | { type: 'ENROLL_VOICE' };
 
 const initialState: BillingState = {
   shopName: '',
   items: [],
   history: [],
   totalAmount: 0,
+  isVoiceEnrolled: false,
 };
 
 const billingReducer = (state: BillingState, action: Action): BillingState => {
   switch (action.type) {
     case 'SET_SHOP_NAME':
       return { ...state, shopName: action.payload };
+    case 'ENROLL_VOICE':
+      return { ...state, isVoiceEnrolled: true };
     case 'ADD_ITEM': {
       const { name, quantity, unit, unitPrice } = action.payload;
       const existingItemIndex = state.items.findIndex(
@@ -114,6 +119,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         ...state, 
         shopName: payload.shopName || '',
         history: hydratedHistory,
+        isVoiceEnrolled: payload.isVoiceEnrolled || false,
         items: [],
         totalAmount: 0,
       };
@@ -135,6 +141,7 @@ interface BillingContextType extends BillingState {
   resetBill: () => void;
   saveBill: () => void;
   deleteBill: (billId: string) => void;
+  enrollVoice: () => void;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -163,16 +170,19 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         const stateToStore = {
           shopName: state.shopName,
           history: state.history,
+          isVoiceEnrolled: state.isVoiceEnrolled,
         };
         localStorage.setItem('billingState', JSON.stringify(stateToStore));
       } catch (error) {
         console.error('Failed to save state to localStorage', error);
       }
     }
-  }, [state.shopName, state.history, isLoading]);
+  }, [state.shopName, state.history, state.isVoiceEnrolled, isLoading]);
 
   const setShopName = (name: string) => dispatch({ type: 'SET_SHOP_NAME', payload: name });
   
+  const enrollVoice = () => dispatch({ type: 'ENROLL_VOICE' });
+
   const addItem = (item: Omit<BillItem, 'id' | 'lineTotal'>) => {
     const existingItem = state.items.find(
       i => i.name.toLowerCase() === item.name.toLowerCase()
@@ -243,7 +253,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BillingContext.Provider value={{ ...state, isLoading, setShopName, addItem, removeItem, resetBill, saveBill, deleteBill }}>
+    <BillingContext.Provider value={{ ...state, isLoading, setShopName, addItem, removeItem, resetBill, saveBill, deleteBill, enrollVoice }}>
       {children}
     </BillingContext.Provider>
   );

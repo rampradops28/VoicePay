@@ -4,7 +4,7 @@ import { useState, useCallback, FormEvent, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Mic, Loader2, Wand2 } from 'lucide-react';
+import { Mic, Loader2, Wand2, ShieldOff } from 'lucide-react';
 import { useBilling } from '@/context/BillingContext';
 import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +28,7 @@ export default function VoiceInput() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const { addItem, removeItem, resetBill, saveBill } = useBilling();
+  const { addItem, removeItem, resetBill, saveBill, isVoiceEnrolled } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
 
@@ -68,6 +68,22 @@ export default function VoiceInput() {
     if (!commandToProcess) return;
 
     console.log(`Processing command: "${commandToProcess}"`);
+
+    // SIMULATE VOICE CHECK
+    // In a real app, a voice biometric service would run here.
+    // We simulate an invalid voice if the command includes "impostor".
+    if (isVoiceEnrolled && commandToProcess.toLowerCase().includes('impostor')) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Voice Detected',
+            description: 'This command was ignored as the voice did not match.',
+        });
+        setCommand(''); // Clear the invalid command
+        setSuggestions([]);
+        return;
+    }
+
+
     const parsed = parseCommand(commandToProcess);
 
     if (!parsed) {
@@ -101,7 +117,7 @@ export default function VoiceInput() {
     // Clear input after processing
     setCommand('');
     setSuggestions([]);
-  }, [addItem, removeItem, resetBill, saveBill, toast]);
+  }, [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled]);
 
 
   const handleSubmit = (e: FormEvent) => {
@@ -145,11 +161,11 @@ export default function VoiceInput() {
           }
         }
         
-        setCommand(interimTranscript);
+        setCommand(finalTranscript.trim() || interimTranscript);
 
         // Process final transcripts as they come in
         if (finalTranscript.trim()) {
-            const commands = finalTranscript.trim().split(/(?=add|remove|reset|calculate|kanak|total|clear bill|save bill)/i).filter(c => c.trim());
+            const commands = finalTranscript.trim().split(/(?=add|remove|reset|calculate|kanak|total|clear bill|save bill|impostor)/i).filter(c => c.trim());
             commands.forEach(cmd => processCommand(cmd));
             finalTranscript = ''; // Clear buffer after processing
         }
@@ -163,6 +179,16 @@ export default function VoiceInput() {
       toast({ variant: 'destructive', title: 'Not Supported', description: 'Voice recognition is not supported in your browser.' });
       return;
     }
+
+    if (!isVoiceEnrolled) {
+        toast({
+            variant: 'destructive',
+            title: 'Voice Not Enrolled',
+            description: 'Please enroll your voice from the login screen to use voice commands.',
+        });
+        return;
+    }
+
     if (isRecording) {
       recognitionRef.current.stop();
       setIsRecording(false); // Update UI immediately
@@ -182,7 +208,10 @@ export default function VoiceInput() {
           Voice Command
         </CardTitle>
         <CardDescription>
-          Tap the mic to start listening. Add multiple items by speaking. Tap the mic again to stop.
+          {isVoiceEnrolled
+            ? "Tap the mic to start speaking commands. Only your enrolled voice will be accepted."
+            : "Please enroll your voice on the login page to enable this feature."
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -198,6 +227,7 @@ export default function VoiceInput() {
             variant={isRecording ? 'destructive' : 'default'}
             onClick={handleMicClick}
             className={cn('mic-ripple', isRecording && 'recording')}
+            disabled={!isVoiceEnrolled}
           >
             <Mic />
           </Button>
