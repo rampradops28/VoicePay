@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 export default function BillingTable() {
   const { items, removeItem, shopName } = useBilling();
 
-  const totalAmount = items.reduce((acc, item) => acc + item.lineTotal, 0);
+  const totalAmount = items.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
 
   return (
     <Card className="printable-area">
@@ -52,8 +52,8 @@ export default function BillingTable() {
                     <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
-                    <TableCell className="text-right">₹{item.unitPrice.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-semibold">₹{item.lineTotal.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">₹{(item.unitPrice || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-semibold">₹{(item.lineTotal || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right no-print">
                         <Button variant="ghost" size="icon" onClick={() => removeItem(item.name)}>
                             <Trash2 className="h-4 w-4 text-destructive/70" />
