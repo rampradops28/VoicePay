@@ -11,7 +11,7 @@ import { Download } from 'lucide-react';
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { shopName } = useBilling();
+  const { shopName, isLoading } = useBilling();
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
@@ -54,6 +54,20 @@ export default function Header() {
     { href: '/', label: 'Billing' },
     { href: '/history', label: 'History & Analytics' },
   ];
+
+  if (isLoading || !shopName) {
+    return (
+       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
+        <div className="container flex h-16 items-center">
+            <div className="mr-4 flex">
+                <Link href="/" className="flex items-center space-x-2">
+                    <span className="font-bold font-headline text-lg text-primary">Tamil VoicePay</span>
+                </Link>
+            </div>
+        </div>
+       </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
