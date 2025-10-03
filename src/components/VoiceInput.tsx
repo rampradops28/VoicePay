@@ -4,7 +4,7 @@ import { useState, useCallback, FormEvent, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Mic, Loader2, Wand2, ShieldOff } from 'lucide-react';
+import { Mic, Loader2, Wand2, ShieldOff, WifiOff } from 'lucide-react';
 import { useBilling } from '@/context/BillingContext';
 import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +31,25 @@ export default function VoiceInput() {
   const { addItem, removeItem, resetBill, saveBill, isVoiceEnrolled } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      }
+    };
+  }, []);
 
   const fetchSuggestions = useCallback(async (partialCommand: string) => {
     if (partialCommand.length < 3) {
@@ -183,6 +202,15 @@ export default function VoiceInput() {
   }, [toast, processCommand]);
 
   const handleMicClick = () => {
+    if (!isOnline) {
+      toast({
+        variant: 'destructive',
+        title: 'Offline Mode',
+        description: 'An internet connection is required to use voice commands.',
+      });
+      return;
+    }
+
     if (!recognitionRef.current) {
       toast({ variant: 'destructive', title: 'Not Supported', description: 'Voice recognition is not supported in your browser.' });
       return;
@@ -217,7 +245,7 @@ export default function VoiceInput() {
         </CardTitle>
         <CardDescription>
           {isVoiceEnrolled
-            ? "Tap the mic to start speaking commands. Only your enrolled voice will be accepted."
+            ? "Tap the mic to speak. Voice commands require an internet connection."
             : "Please enroll your voice on the login page to enable this feature."
           }
         </CardDescription>
@@ -235,9 +263,10 @@ export default function VoiceInput() {
             variant={isRecording ? 'destructive' : 'default'}
             onClick={handleMicClick}
             className={cn('mic-ripple', isRecording && 'recording')}
-            disabled={!isVoiceEnrolled}
+            disabled={!isVoiceEnrolled || !isOnline}
+            title={!isOnline ? 'Voice commands are disabled while offline' : 'Start voice command'}
           >
-            <Mic />
+            {!isOnline ? <WifiOff /> : <Mic />}
           </Button>
         </form>
         <div className="mt-4 min-h-[100px]">
