@@ -30,7 +30,10 @@ export default function AnalyticsDashboard() {
 
     history.forEach(bill => {
       bill.items.forEach(item => {
-        const key = item.name.toLowerCase();
+        // Normalize item name by removing unit information if present
+        const normalizedName = item.name.replace(new RegExp(`\\s${item.unit}$`, 'i'), '').trim();
+        const key = normalizedName.toLowerCase();
+        
         if (!productSales[key]) {
           productSales[key] = { revenue: 0, quantity: 0, transactions: [] };
         }
@@ -143,7 +146,7 @@ export default function AnalyticsDashboard() {
                 <YAxis />
                 <Tooltip formatter={(value: number) => `Rs ${value.toFixed(2)}`} />
                 <Legend />
-                <Bar dataKey="revenue" fill="var(--color-primary)" name="Revenue" />
+                <Bar dataKey="revenue" fill="hsl(var(--primary))" name="Revenue" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
