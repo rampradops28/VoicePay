@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
     
+    // Do not call the flow for very short commands to save resources and avoid errors.
     if (partialCommand.length < 2) {
       return NextResponse.json({ suggestions: [] });
     }
@@ -29,8 +30,8 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('Error in suggestion flow:', error);
-    // Don't expose internal errors to the client.
-    // Return a generic error or an empty suggestions array to prevent crashes.
+    // CRITICAL: Always return a valid JSON response, even on internal errors.
+    // This prevents the client from crashing.
     return NextResponse.json(
       { suggestions: [], error: 'An error occurred while fetching suggestions.' },
       { status: 500 }

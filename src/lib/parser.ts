@@ -39,7 +39,6 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
   const cmd = command.toLowerCase().trim();
 
   // Split command by "and" to handle chained commands
-  // We make the split more robust to handle extra spaces.
   const commandSegments = cmd.split(/\s+and\s+/i);
   
   const parsedCommands: ParsedCommand[] = [];
@@ -48,7 +47,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     segment = segment.trim();
     if (!segment) continue;
 
-    // Rule: "remove <item>"
+    // Rule: "remove <item>", "delete <item>"
     const removeRegex = /^(?:remove|delete|cancel)\s+(.+)$/i;
     const removeMatch = segment.match(removeRegex);
     if (removeMatch) {
@@ -61,14 +60,14 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       continue;
     }
 
-    // Rule: "clear bill" or "reset bill"
-    if (segment.includes('clear bill') || segment.includes('reset bill')) {
+    // Rule: "clear bill" or "reset bill" or just "reset"
+    if (segment.includes('clear') || segment.includes('reset')) {
       parsedCommands.push({ action: 'reset', payload: null });
       continue;
     }
 
-    // Rule: "save bill"
-    if (segment.includes('save bill')) {
+    // Rule: "save bill" or just "save"
+    if (segment.includes('save')) {
       parsedCommands.push({ action: 'save', payload: null });
       continue;
     }
@@ -85,15 +84,17 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     let quantity: number | null = null;
     let unit: string = '';
 
-    const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees))/i;
+    // Regex to find price like "50rs", "50 rupees", "at 50"
+    const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees)|at\s+(\d+(\.\d+)?))/i;
     const priceMatch = content.match(priceRegex);
 
     if (priceMatch) {
-      price = parseFloat(priceMatch[1]);
+      price = parseFloat(priceMatch[1] || priceMatch[3]);
       content = content.replace(priceRegex, '').trim();
     }
     
-    const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)?\b/i;
+    // Regex to find quantity and unit like "2kg", "2 kg", "2"
+    const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)?/i;
     const qtyUnitMatch = content.match(qtyUnitRegex);
     
     if (qtyUnitMatch) {
@@ -103,16 +104,8 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       }
       content = content.replace(qtyUnitRegex, '').trim();
     }
-
-    if (quantity === null) {
-      const standaloneQtyRegex = /^\s*(\d+(\.\d+)?)\b/;
-      const standaloneQtyMatch = content.match(standaloneQtyRegex);
-      if (standaloneQtyMatch) {
-        quantity = parseFloat(standaloneQtyMatch[1]);
-        content = content.replace(standaloneQtyRegex, '').trim();
-      }
-    }
     
+    // Fallback if price is at the end without "rs"
     if (price === null) {
       const standalonePriceRegex = /(\d+(\.\d+)?)\s*$/;
       const standalonePriceMatch = content.match(standalonePriceRegex);
@@ -125,6 +118,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     const rawItemName = content.replace(/\s+/g, ' ').trim();
     const itemName = stripLeadingNoise(rawItemName);
 
+    // Only create an 'add' command if we have all the necessary parts
     if (itemName && quantity !== null && price !== null) {
       parsedCommands.push({
         action: 'add',
@@ -132,7 +126,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
           item: itemName,
           quantity: quantity,
           unit: unit || 'pcs', 
-          price: price, // price is now unitPrice
+          price: price,
         },
       });
       continue;
