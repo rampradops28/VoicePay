@@ -20,7 +20,6 @@ import { format } from 'date-fns';
 import { Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Bill } from '@/lib/types';
-import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 
 export default function HistoryPage() {
@@ -70,12 +69,12 @@ export default function HistoryPage() {
 
     const encodedText = encodeURIComponent(billText);
     const smsUri = `sms:${phoneNumber}?body=${encodedText}`;
+    
+    window.location.href = smsUri;
 
     setIsSmsDialogOpen(false);
     setPhoneNumber('');
     setSelectedBill(null);
-    
-    window.location.href = smsUri;
   };
   
   const handleDeleteClick = (billId: string) => {
@@ -99,8 +98,6 @@ export default function HistoryPage() {
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="space-y-8">
-          <AnalyticsDashboard />
-
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Billing History</CardTitle>

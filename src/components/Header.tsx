@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { useBilling } from '@/context/BillingContext';
-import { History, LogOut, Receipt } from 'lucide-react';
+import { History, LogOut, Receipt, TrendingUp } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function Header() {
   const navItems = [
     { href: '/', label: 'Billing', icon: Receipt },
     { href: '/history', label: 'History', icon: History },
+    { href: '/analytics', label: 'Analytics', icon: TrendingUp },
   ];
 
   return (
