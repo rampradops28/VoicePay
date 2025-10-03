@@ -25,7 +25,7 @@ import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { history, deleteBill, isLoading, shopName } = useBilling();
+  const { history, deleteBill, isLoading, ownerName } = useBilling();
   const { toast } = useToast();
   
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
@@ -33,13 +33,19 @@ export default function HistoryPage() {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
 
   useEffect(() => {
-    if (!isLoading && !shopName) {
+    if (!isLoading && !ownerName) {
       router.push('/login');
     }
-  }, [isLoading, shopName, router]);
+  }, [isLoading, ownerName, router]);
   
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+
+  // Do not render the page if we are not authenticated.
+  // This prevents flashing content before redirect.
+  if (!ownerName) {
+    return null;
   }
 
   const handleResendSmsClick = (bill: Bill) => {
@@ -63,7 +69,7 @@ export default function HistoryPage() {
       .map(item => `${item.name} (${item.quantity}${item.unit}) - Rs ${(item.lineTotal || 0).toFixed(2)}`)
       .join('\n');
     
-    const billText = `Bill from ${selectedBill.shopName}:\n${itemsText}\n\nTotal: Rs ${(selectedBill.totalAmount || 0).toFixed(2)}`;
+    const billText = `Bill from ${selectedBill.ownerName}:\n${itemsText}\n\nTotal: Rs ${(selectedBill.totalAmount || 0).toFixed(2)}`;
 
     const encodedText = encodeURIComponent(billText);
     const smsUri = `sms:${phoneNumber}?body=${encodedText}`;
@@ -128,7 +134,7 @@ export default function HistoryPage() {
                           <div className="p-4 border rounded-md bg-background">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
                                 <div className="mb-2 sm:mb-0">
-                                    <h3 className="font-headline text-lg font-semibold">{bill.shopName}</h3>
+                                    <h3 className="font-headline text-lg font-semibold">{bill.ownerName}</h3>
                                     <p className="text-sm text-muted-foreground">
                                     {format(new Date(bill.createdAt), 'MMMM do, yyyy - h:mm a')}
                                     </p>

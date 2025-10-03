@@ -5,7 +5,7 @@ import { BillItem, Bill } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface BillingState {
-  shopName: string;
+  ownerName: string;
   items: BillItem[];
   history: Bill[];
   totalAmount: number;
@@ -13,7 +13,7 @@ interface BillingState {
 }
 
 type Action =
-  | { type: 'SET_SHOP_NAME'; payload: string }
+  | { type: 'SET_OWNER_NAME'; payload: string }
   | { type: 'ADD_ITEM'; payload: Omit<BillItem, 'id' | 'lineTotal'> }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'RESET_BILL' }
@@ -24,7 +24,7 @@ type Action =
   | { type: 'ENROLL_VOICE' };
 
 const initialState: BillingState = {
-  shopName: '',
+  ownerName: '',
   items: [],
   history: [],
   totalAmount: 0,
@@ -33,8 +33,8 @@ const initialState: BillingState = {
 
 const billingReducer = (state: BillingState, action: Action): BillingState => {
   switch (action.type) {
-    case 'SET_SHOP_NAME':
-      return { ...state, shopName: action.payload };
+    case 'SET_OWNER_NAME':
+      return { ...state, ownerName: action.payload };
     case 'ENROLL_VOICE':
       return { ...state, isVoiceEnrolled: true };
     case 'ADD_ITEM': {
@@ -87,7 +87,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       if (state.items.length === 0) return state;
       const newBill: Bill = {
         id: new Date().toISOString(),
-        shopName: state.shopName,
+        ownerName: state.ownerName,
         items: [...state.items],
         totalAmount: state.totalAmount,
         createdAt: new Date().toISOString(),
@@ -117,7 +117,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       
       return { 
         ...state, 
-        shopName: payload.shopName || '',
+        ownerName: payload.ownerName || '',
         history: hydratedHistory,
         isVoiceEnrolled: payload.isVoiceEnrolled || false,
         // Don't hydrate current bill, start fresh
@@ -136,7 +136,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
 
 interface BillingContextType extends BillingState {
   isLoading: boolean;
-  setShopName: (name: string) => void;
+  setOwnerName: (name: string) => void;
   addItem: (item: Omit<BillItem, 'id' | 'lineTotal'>) => void;
   removeItem: (itemName: string) => void;
   resetBill: () => void;
@@ -172,7 +172,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     if (!isLoading) {
       try {
         const stateToStore = {
-          shopName: state.shopName,
+          ownerName: state.ownerName,
           history: state.history,
           isVoiceEnrolled: state.isVoiceEnrolled,
         };
@@ -181,10 +181,10 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         console.error('Failed to save state to localStorage', error);
       }
     }
-  }, [state.shopName, state.history, state.isVoiceEnrolled, isLoading]);
+  }, [state.ownerName, state.history, state.isVoiceEnrolled, isLoading]);
 
-  const setShopName = (name: string) => {
-    dispatch({ type: 'SET_SHOP_NAME', payload: name });
+  const setOwnerName = (name: string) => {
+    dispatch({ type: 'SET_OWNER_NAME', payload: name });
     localStorage.setItem('isAuthenticated', 'true');
   };
   
@@ -262,7 +262,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const value = {
       ...state,
       isLoading,
-      setShopName,
+      setOwnerName,
       addItem,
       removeItem,
       resetBill,

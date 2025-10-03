@@ -11,7 +11,7 @@ import { Download } from 'lucide-react';
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { shopName, isLoading } = useBilling();
+  const { ownerName, isLoading } = useBilling();
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
@@ -47,7 +47,9 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('billingState');
-    router.push('/login');
+    // This will effectively log the user out by clearing the context state
+    // and then the login page will be shown on next navigation.
+    window.location.href = '/login';
   };
 
   const navItems = [
@@ -55,7 +57,7 @@ export default function Header() {
     { href: '/history', label: 'History & Analytics' },
   ];
 
-  if (isLoading || !shopName) {
+  if (isLoading || !ownerName) {
     return (
        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
         <div className="container flex h-16 items-center">
@@ -98,7 +100,7 @@ export default function Header() {
               Install App
             </Button>
           )}
-          <span className="hidden sm:inline-block text-sm text-muted-foreground">{shopName}</span>
+          <span className="hidden sm:inline-block text-sm text-muted-foreground">{ownerName}</span>
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             Logout
           </Button>

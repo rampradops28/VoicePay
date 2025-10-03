@@ -8,7 +8,7 @@ import { Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function BillingTable() {
-  const { items, removeItem, shopName } = useBilling();
+  const { items, removeItem, ownerName } = useBilling();
 
   const totalAmount = items.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
 
@@ -17,7 +17,7 @@ export default function BillingTable() {
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
-                <CardTitle className="font-headline text-2xl">{shopName}</CardTitle>
+                <CardTitle className="font-headline text-2xl">{ownerName}</CardTitle>
                 <CardDescription>
                     Date: {format(new Date(), 'PP')}
                 </CardDescription>

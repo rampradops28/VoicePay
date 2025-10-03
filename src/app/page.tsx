@@ -15,17 +15,17 @@ import { Label } from '@/components/ui/label';
 
 export default function BillingPage() {
   const router = useRouter();
-  const { shopName, resetBill, items, totalAmount, saveBill, isLoading } = useBilling();
+  const { ownerName, resetBill, items, totalAmount, saveBill, isLoading } = useBilling();
   const { toast } = useToast();
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
 
   useEffect(() => {
     // Wait until the context is done loading before checking auth state.
-    if (!isLoading && !shopName) {
+    if (!isLoading && !ownerName) {
       router.push('/login');
     }
-  }, [isLoading, shopName, router]);
+  }, [isLoading, ownerName, router]);
 
   const handleSendSmsClick = () => {
     if (items.length === 0) {
@@ -53,7 +53,7 @@ export default function BillingPage() {
       .map(item => `${item.name} (${item.quantity}${item.unit}) - Rs ${item.lineTotal.toFixed(2)}`)
       .join('\n');
     
-    const billText = `Bill from ${shopName}:\n${itemsText}\n\nTotal: Rs ${totalAmount.toFixed(2)}`;
+    const billText = `Bill from ${ownerName}:\n${itemsText}\n\nTotal: Rs ${totalAmount.toFixed(2)}`;
 
     const encodedText = encodeURIComponent(billText);
     const smsUri = `sms:${phoneNumber}?body=${encodedText}`;
@@ -71,6 +71,13 @@ export default function BillingPage() {
       </div>
     );
   }
+
+  // Do not render the page if we are not authenticated.
+  // This prevents flashing content before redirect.
+  if (!ownerName) {
+    return null;
+  }
+
 
   return (
     <>

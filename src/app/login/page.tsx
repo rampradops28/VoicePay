@@ -14,23 +14,23 @@ import { useToast } from '@/hooks/use-toast';
 
 
 export default function LoginPage() {
-  const [shopNameInput, setShopNameInput] = useState('');
+  const [ownerNameInput, setOwnerNameInput] = useState('');
   const router = useRouter();
-  const { setShopName, isVoiceEnrolled, enrollVoice, isLoading, shopName } = useBilling();
+  const { setOwnerName, isVoiceEnrolled, enrollVoice, isLoading, ownerName } = useBilling();
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
 
 
   useEffect(() => {
-    // If loading is done and a shop name exists, the user is authenticated.
-    if (!isLoading && shopName) {
+    // If loading is done and a owner name exists, the user is authenticated.
+    if (!isLoading && ownerName) {
       router.push('/');
     }
-  }, [isLoading, shopName, router]);
+  }, [isLoading, ownerName, router]);
 
   const handleLogin = () => {
-    if (shopNameInput.trim()) {
-      setShopName(shopNameInput.trim());
+    if (ownerNameInput.trim()) {
+      setOwnerName(ownerNameInput.trim());
       router.push('/');
     }
   };
@@ -61,6 +61,12 @@ export default function LoginPage() {
       );
   }
 
+  // Only render the login form if we are not authenticated.
+  // This prevents flashing the login page for authenticated users on reload.
+  if (ownerName) {
+    return null;
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
       <Card className="w-full max-w-sm">
@@ -72,28 +78,28 @@ export default function LoginPage() {
           <CardDescription>Your offline-first billing assistant.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="shopName" className="w-full">
+          <Tabs defaultValue="ownerName" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="shopName">Shop Name</TabsTrigger>
+              <TabsTrigger value="ownerName">Owner Name</TabsTrigger>
               <TabsTrigger value="voice">Voice Sign-In</TabsTrigger>
             </TabsList>
-            <TabsContent value="shopName" className="mt-4">
+            <TabsContent value="ownerName" className="mt-4">
                 <CardDescription className="text-center mb-4">
-                    Enter your shop name to start billing.
+                    Enter your name to start billing.
                 </CardDescription>
                 <div className="grid w-full items-center gap-4">
                     <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="shopName">Shop Name</Label>
+                    <Label htmlFor="ownerName">Owner Name</Label>
                     <Input
-                        id="shopName"
-                        placeholder="e.g., Annachi Kadai"
-                        value={shopNameInput}
-                        onChange={(e) => setShopNameInput(e.target.value)}
+                        id="ownerName"
+                        placeholder="e.g., Kumar"
+                        value={ownerNameInput}
+                        onChange={(e) => setOwnerNameInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                     />
                     </div>
                 </div>
-                 <Button className="w-full mt-4" onClick={handleLogin} disabled={!shopNameInput.trim()}>
+                 <Button className="w-full mt-4" onClick={handleLogin} disabled={!ownerNameInput.trim()}>
                     Start Billing
                 </Button>
             </TabsContent>

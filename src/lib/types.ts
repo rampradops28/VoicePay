@@ -9,7 +9,7 @@ export interface BillItem {
 
 export interface Bill {
   id: string;
-  shopName: string;
+  ownerName: string;
   items: BillItem[];
   totalAmount: number;
   createdAt: string;
