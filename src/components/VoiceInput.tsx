@@ -116,7 +116,9 @@ export default function VoiceInput() {
       recognition.interimResults = true;
 
       recognition.onstart = () => setIsRecording(true);
-      recognition.onend = () => setIsRecording(false);
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
         if (event.error !== 'aborted') {
@@ -128,6 +130,7 @@ export default function VoiceInput() {
       let finalTranscript = '';
       recognition.onresult = (event: any) => {
         let interimTranscript = '';
+        finalTranscript = ''; // Reset final transcript on new result
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
@@ -148,14 +151,13 @@ export default function VoiceInput() {
     }
     if (isRecording) {
       recognitionRef.current.stop();
-      setIsRecording(false);
-      // Process the final command after stopping
+      // The onend event will set isRecording to false
+      // And we process the command with the final transcript
       if(command.trim()){
         processCommand(command);
       }
     } else {
       recognitionRef.current.start();
-      setIsRecording(true);
     }
   };
 
