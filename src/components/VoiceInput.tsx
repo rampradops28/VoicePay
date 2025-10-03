@@ -112,6 +112,8 @@ export default function VoiceInput() {
           title: 'Invalid Command',
           description: `Could not understand "${commandToProcess}". Please try again.`,
         });
+        setCommand('');
+        setSuggestions([]);
         return;
       }
 
@@ -161,7 +163,7 @@ export default function VoiceInput() {
     }
     
     const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Process single utterances
+    recognition.continuous = true;
     recognition.lang = 'en-IN';
     recognition.interimResults = true;
 
@@ -181,20 +183,16 @@ export default function VoiceInput() {
       let interimTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          finalTranscript += event.results[i][0].transcript + ' ';
         } else {
           interimTranscript += event.results[i][0].transcript;
         }
       }
       setCommand(finalTranscript.trim() || interimTranscript);
-      
-      if (finalTranscript.trim()) {
-        processCommand(finalTranscript.trim());
-      }
     };
 
     return recognition;
-  }, [processCommand, toast]);
+  }, [toast]);
 
   const handleMicClick = async () => {
     if (!isOnline) {
@@ -206,32 +204,34 @@ export default function VoiceInput() {
       toast({ variant: 'destructive', title: 'Voice Not Enrolled', description: 'Please enroll your voice from the login screen to use voice commands.' });
       return;
     }
-
+    
     if (isRecording && recognitionRef.current) {
       recognitionRef.current.stop();
-      return;
-    }
-    
-    try {
-      // 1. Request microphone permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop()); // We only needed permission, not the stream itself
-
-      // 2. Only now, create and start the recognition instance
-      const recognition = setupRecognition();
-      if (recognition) {
-        recognitionRef.current = recognition;
-        setCommand('');
-        setSuggestions([]);
-        recognition.start();
+      // Process the final command when stopping
+      if(command.trim()){
+        const commands = command.trim().split(/\s+and\s+/);
+        commands.forEach(cmd => processCommand(cmd));
       }
-    } catch (err) {
-      console.error("Microphone permission error:", err);
-      toast({
-        variant: "destructive",
-        title: "Microphone Access Denied",
-        description: "Voice commands require microphone access. Please enable it in your browser or app settings."
-      });
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+
+        const recognition = setupRecognition();
+        if (recognition) {
+          recognitionRef.current = recognition;
+          setCommand('');
+          setSuggestions([]);
+          recognition.start();
+        }
+      } catch (err) {
+        console.error("Microphone permission error:", err);
+        toast({
+          variant: "destructive",
+          title: "Microphone Access Denied",
+          description: "Voice commands require microphone access. Please enable it in your browser settings."
+        });
+      }
     }
   };
 
@@ -282,7 +282,6 @@ export default function VoiceInput() {
                     <button
                       onClick={() => {
                         processCommand(s);
-                        setSuggestions([]);
                       }}
                       className="text-left w-full p-2 text-sm rounded-md hover:bg-secondary"
                     >
