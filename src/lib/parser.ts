@@ -1,3 +1,4 @@
+import { groceryItems } from './grocery-data';
 
 export type ParsedCommand =
   | { action: 'add'; payload: { item: string; quantity: number; unit: string; price: number } }
@@ -88,7 +89,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     const removeMatch = segment.match(removeRegex);
     if (removeMatch) {
         const itemToRemove = removeMatch[1].trim().split(' ').pop() || '';
-        if (itemToRemove) {
+        if (itemToRemove && groceryItems.has(itemToRemove)) {
              parsedCommands.push({
                 action: 'remove',
                 payload: { item: itemToRemove },
@@ -137,8 +138,8 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     const words = content.replace(/\s+/g, ' ').trim().split(' ');
     const itemName = words.pop() || '';
 
-    // Only create an 'add' command if we have all the necessary parts
-    if (itemName && quantity !== null && price !== null) {
+    // Only create an 'add' command if we have all the necessary parts AND the item is valid
+    if (itemName && quantity !== null && price !== null && groceryItems.has(itemName)) {
       parsedCommands.push({
         action: 'add',
         payload: {
