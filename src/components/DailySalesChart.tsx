@@ -9,7 +9,7 @@ export default function DailySalesChart() {
   const { history } = useBilling();
 
   const dailySales = useMemo(() => {
-    if (history.length < 2) {
+    if (history.length < 1) {
       return [];
     }
 
@@ -48,7 +48,7 @@ export default function DailySalesChart() {
     return (
         <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
             <p className="text-muted-foreground">Not enough data for sales trend.</p>
-            <p className="text-sm text-muted-foreground ml-1">At least two days of sales are needed.</p>
+             <p className="text-sm text-muted-foreground ml-1">At least one day of sales is needed.</p>
         </div>
     );
   }
@@ -67,7 +67,7 @@ export default function DailySalesChart() {
         <YAxis 
             axisLine={{ stroke: 'hsl(var(--border))' }}
             tickLine={{ stroke: 'hsl(var(--border))' }}
-            tickFormatter={(value) => `₹${value}`}
+            tickFormatter={(value) => `Rs ${value}`}
             stroke="hsl(var(--muted-foreground))"
         />
         <Tooltip 
@@ -75,7 +75,7 @@ export default function DailySalesChart() {
             backgroundColor: 'hsl(var(--background))',
             borderColor: 'hsl(var(--border))',
           }}
-          formatter={(value: number) => [`₹${value.toFixed(2)}`, 'Sales']} 
+          formatter={(value: number) => [`Rs ${value.toFixed(2)}`, 'Sales']} 
           labelFormatter={(label) => format(new Date(label), 'PPP')}
         />
         <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }}/>

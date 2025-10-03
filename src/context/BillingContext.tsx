@@ -100,20 +100,20 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     }
     case 'HYDRATE_STATE': {
       const payload = action.payload;
-      // Ensure hydrated history items have lineTotal calculated, if they exist
       const hydratedHistory = payload.history?.map(bill => ({
         ...bill,
         items: bill.items.map(item => ({
           ...item,
           lineTotal: parseFloat(((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2))
-        }))
+        })),
+        // Ensure totalAmount is a number
+        totalAmount: typeof bill.totalAmount === 'number' ? bill.totalAmount : 0
       })) || [];
       
       return { 
         ...state, 
         shopName: payload.shopName || '',
         history: hydratedHistory,
-        // Reset current bill on hydration
         items: [],
         totalAmount: 0,
       };
@@ -155,7 +155,6 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      // Persist shopName and history. Current bill items are not persisted.
       const stateToStore = {
         shopName: state.shopName,
         history: state.history,
@@ -183,7 +182,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     } else {
         toast({
             title: 'Item Added',
-            description: `${item.quantity}${item.unit} ${item.name} for ₹${item.unitPrice.toFixed(2)} per ${item.unit}`,
+            description: `${item.quantity}${item.unit} ${item.name} for Rs ${item.unitPrice.toFixed(2)} per ${item.unit}`,
         });
     }
   };

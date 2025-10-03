@@ -98,7 +98,7 @@ export default function AnalyticsDashboard() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₹{analytics.totalRevenue.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">Rs {analytics.totalRevenue.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -116,7 +116,7 @@ export default function AnalyticsDashboard() {
                     <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₹{analytics.averageBillValue.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">Rs {analytics.averageBillValue.toFixed(2)}</div>
                 </CardContent>
             </Card>
              <Card>
@@ -141,7 +141,7 @@ export default function AnalyticsDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} />
                 <YAxis />
-                <Tooltip formatter={(value: number) => `₹${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: number) => `Rs ${value.toFixed(2)}`} />
                 <Legend />
                 <Bar dataKey="revenue" fill="var(--color-primary)" name="Revenue" />
               </BarChart>
@@ -163,7 +163,7 @@ export default function AnalyticsDashboard() {
             <CardHeader>
                 <CardTitle>Proof for Top Seller: {analytics.topProductWithProof.name}</CardTitle>
                 <CardDescription>
-                    This product has generated ₹{analytics.topProductWithProof.revenue.toFixed(2)} from {analytics.topProductWithProof.quantity} units sold. Here are some recent transactions.
+                    This product has generated Rs {analytics.topProductWithProof.revenue.toFixed(2)} from {analytics.topProductWithProof.quantity} units sold. Here are some recent transactions.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -180,7 +180,7 @@ export default function AnalyticsDashboard() {
                             <TableRow key={i}>
                                 <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
                                 <TableCell className="text-right">{t.quantity} {t.unit}</TableCell>
-                                <TableCell className="text-right">₹{t.total.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">Rs {t.total.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

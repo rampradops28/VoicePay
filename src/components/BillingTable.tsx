@@ -24,7 +24,7 @@ export default function BillingTable() {
             </div>
             <div className="text-right">
                 <p className="text-sm text-muted-foreground">Current Bill</p>
-                <p className="font-bold text-3xl font-headline text-primary">₹{totalAmount.toFixed(2)}</p>
+                <p className="font-bold text-3xl font-headline text-primary">Rs {totalAmount.toFixed(2)}</p>
             </div>
         </div>
       </CardHeader>
@@ -52,8 +52,8 @@ export default function BillingTable() {
                     <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
-                    <TableCell className="text-right">₹{(item.unitPrice || 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-semibold">₹{(item.lineTotal || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">Rs {(item.unitPrice || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-semibold">Rs {(item.lineTotal || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right no-print">
                         <Button variant="ghost" size="icon" onClick={() => removeItem(item.name)}>
                             <Trash2 className="h-4 w-4 text-destructive/70" />
@@ -67,7 +67,7 @@ export default function BillingTable() {
                 <TableFooter>
                 <TableRow className="bg-muted/50">
                     <TableCell colSpan={3} className="text-right font-bold text-lg">Grand Total</TableCell>
-                    <TableCell className="text-right font-bold text-lg">₹{totalAmount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-bold text-lg">Rs {totalAmount.toFixed(2)}</TableCell>
                     <TableCell className="no-print"></TableCell>
                 </TableRow>
                 </TableFooter>

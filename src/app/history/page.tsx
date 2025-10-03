@@ -66,10 +66,10 @@ export default function HistoryPage() {
     if (!selectedBill) return;
 
     const itemsText = selectedBill.items
-      .map(item => `${item.name} (${item.quantity}${item.unit}) - ₹${(item.lineTotal || 0).toFixed(2)}`)
+      .map(item => `${item.name} (${item.quantity}${item.unit}) - Rs ${(item.lineTotal || 0).toFixed(2)}`)
       .join('\n');
     
-    const billText = `Bill from ${selectedBill.shopName}:\n${itemsText}\n\nTotal: ₹${(selectedBill.totalAmount || 0).toFixed(2)}`;
+    const billText = `Bill from ${selectedBill.shopName}:\n${itemsText}\n\nTotal: Rs ${(selectedBill.totalAmount || 0).toFixed(2)}`;
 
     const encodedText = encodeURIComponent(billText);
     const smsUri = `sms:${phoneNumber}?body=${encodedText}`;
@@ -125,9 +125,9 @@ export default function HistoryPage() {
                         <AccordionTrigger>
                           <div className="flex justify-between w-full pr-4 items-center">
                             <div className="text-left">
-                              <span>Bill from {format(new Date(bill.createdAt), 'PPP p')}</span>
+                              <span>Bill from {format(new Date(bill.createdAt), 'PPp')}</span>
                             </div>
-                            <span className="font-semibold text-primary">₹{(bill.totalAmount || 0).toFixed(2)}</span>
+                            <span className="font-semibold text-primary">Rs {(bill.totalAmount || 0).toFixed(2)}</span>
                           </div>
                         </AccordionTrigger>
                         <AccordionContent>
@@ -165,15 +165,15 @@ export default function HistoryPage() {
                                   <TableRow key={item.id}>
                                     <TableCell className="font-medium">{item.name}</TableCell>
                                     <TableCell className="text-center">{item.quantity} {item.unit}</TableCell>
-                                    <TableCell className="text-right">₹{(item.unitPrice || 0).toFixed(2)}</TableCell>
-                                    <TableCell className="text-right">₹{(item.lineTotal || 0).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">Rs {(item.unitPrice || 0).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">Rs {(item.lineTotal || 0).toFixed(2)}</TableCell>
                                   </TableRow>
                                 ))}
                               </TableBody>
                               <TableFooter>
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-right font-bold text-lg">Grand Total</TableCell>
-                                    <TableCell className="text-right font-bold text-lg">₹{(bill.totalAmount || 0).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-bold text-lg">Rs {(bill.totalAmount || 0).toFixed(2)}</TableCell>
                                 </TableRow>
                               </TableFooter>
                             </Table>

@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import VoiceInput from '@/components/VoiceInput';
 import BillingTable from '@/components/BillingTable';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, MessageSquareText, Save } from 'lucide-react';
+import { RotateCcw, MessageSquareText, Save, BookText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -52,10 +52,10 @@ export default function BillingPage() {
     }
 
     const itemsText = items
-      .map(item => `${item.name} (${item.quantity}${item.unit}) - ₹${item.lineTotal.toFixed(2)}`)
+      .map(item => `${item.name} (${item.quantity}${item.unit}) - Rs ${item.lineTotal.toFixed(2)}`)
       .join('\n');
     
-    const billText = `Bill from ${shopName}:\n${itemsText}\n\nTotal: ₹${totalAmount.toFixed(2)}`;
+    const billText = `Bill from ${shopName}:\n${itemsText}\n\nTotal: Rs ${totalAmount.toFixed(2)}`;
 
     const encodedText = encodeURIComponent(billText);
     const smsUri = `sms:${phoneNumber}?body=${encodedText}`;
