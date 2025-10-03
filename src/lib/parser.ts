@@ -49,7 +49,7 @@ const normalizeUnit = (unit: string): string => {
 
 // This regex now includes a word boundary \b to avoid partially matching words.
 const stripLeadingNoise = (text: string): string => {
-  return text.replace(/^(a|an|add|at|had|remove|delete|cancel|சேர்|நீக்கு)\b\s+/i, '').trim();
+  return text.replace(/^(a|an|add|at|had|and|remove|delete|cancel|சேர்|நீக்கு)\b\s+/i, '').trim();
 };
 
 
@@ -135,7 +135,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     }
     
     // The remaining content is the item name. We take the last word as the item.
-    const words = content.replace(/\s+/g, ' ').trim().split(' ');
+    const words = stripLeadingNoise(content.replace(/\s+/g, ' ').trim()).split(' ');
     const itemName = words.pop() || '';
 
     // Only create an 'add' command if we have all the necessary parts AND the item is valid
