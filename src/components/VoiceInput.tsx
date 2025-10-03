@@ -70,8 +70,6 @@ export default function VoiceInput() {
         body: JSON.stringify({ partialCommand }),
       });
       if (!response.ok) {
-        // Even if the response is not OK, we don't want to crash.
-        // We will just clear suggestions and log the error.
         console.error('Failed to fetch suggestions, response not ok.');
         setSuggestions([]);
         return;
@@ -103,24 +101,14 @@ export default function VoiceInput() {
 
       console.log(`Processing command: "${commandToProcess}"`);
 
-      // Simulate impostor detection for demo purposes
-      if (isVoiceEnrolled && commandToProcess.toLowerCase().includes('impostor')) {
-        toast({
-          variant: 'destructive',
-          title: 'Invalid Voice Detected',
-          description: 'This command was ignored as the voice did not match.',
-        });
-        return;
-      }
-      
       // In a real app, you'd send the audio to a backend for verification
       if (isVoiceEnrolled && audioDataUri && ownerName) {
-        const verificationResult = await verifyVoice({ ownerName, audioDataUri });
+        const verificationResult = await verifyVoice({ ownerName, audioDataUri, command: commandToProcess });
         if (!verificationResult.isVerified) {
              toast({
                 variant: 'destructive',
                 title: 'Voice Not Verified',
-                description: 'Could not verify your voice. Please try again.',
+                description: 'The command was ignored as the voice did not match.',
              });
              return;
         }
@@ -221,7 +209,10 @@ export default function VoiceInput() {
 
       // Process final transcripts as they come in
       if (finalTranscript.trim()) {
-        processCommand(finalTranscript.trim());
+        // Here we just pass a placeholder data URI for the audio.
+        // In a real app, you would capture the actual audio.
+        const audioDataUri = 'data:audio/webm;base64,UklGRgA...';
+        processCommand(finalTranscript.trim(), audioDataUri);
         finalTranscript = ''; // Reset for the next command
       }
     };
@@ -311,7 +302,8 @@ export default function VoiceInput() {
                   <li key={i}>
                     <button
                       onClick={() => {
-                        processCommand(s);
+                        const audioDataUri = 'data:audio/webm;base64,UklGRgA...';
+                        processCommand(s, audioDataUri);
                       }}
                       className="text-left w-full p-2 text-sm rounded-md hover:bg-secondary"
                     >

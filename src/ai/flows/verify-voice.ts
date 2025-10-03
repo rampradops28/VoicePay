@@ -4,7 +4,8 @@
  * @fileOverview This file defines a Genkit flow for simulating voice verification.
  *
  * In a real application, this flow would send audio data to a backend service
- * that performs voice biometrics to verify the speaker's identity.
+ * that performs voice biometrics to verify the speaker's identity. This simulation
+ * uses a Genkit prompt to decide if the verification is successful based on keywords.
  *
  * @interface VerifyVoiceInput - The input type for the verifyVoice function.
  * @interface VerifyVoiceOutput - The output type for the verifyVoice function.
@@ -16,6 +17,9 @@ import { z } from 'genkit';
 
 const VerifyVoiceInputSchema = z.object({
   ownerName: z.string().describe('The name of the user to verify.'),
+  command: z
+    .string()
+    .describe('The voice command spoken by the user.'),
   audioDataUri: z
     .string()
     .describe(
@@ -41,8 +45,22 @@ export async function verifyVoice(
   return verifyVoiceFlow(input);
 }
 
-// This is a placeholder flow. In a real application, you would replace this
-// with a call to a backend that performs real voice biometric verification.
+const verifyPrompt = ai.definePrompt({
+    name: 'verifyVoicePrompt',
+    input: { schema: VerifyVoiceInputSchema },
+    output: { schema: VerifyVoiceOutputSchema },
+    prompt: `You are a voice verification security system. Your job is to determine if the speaker is an impostor.
+
+    For this simulation, you will check the spoken command for the keyword "impostor".
+
+    - If the command contains the word "impostor", the speaker is an impostor. Return isVerified: false.
+    - Otherwise, the speaker is the legitimate owner, {{ownerName}}. Return isVerified: true.
+    
+    Spoken Command: "{{command}}"
+    `,
+});
+
+
 const verifyVoiceFlow = ai.defineFlow(
   {
     name: 'verifyVoiceFlow',
@@ -50,15 +68,18 @@ const verifyVoiceFlow = ai.defineFlow(
     outputSchema: VerifyVoiceOutputSchema,
   },
   async (input) => {
-    console.log(`Simulating voice verification for ${input.ownerName}.`);
     // In a real implementation, you would send the audioDataUri to a secure backend.
     // That backend would use a library like 'librosa' in Python to extract MFCCs
     // and compare them against a stored voiceprint in a database like Firestore.
 
-    // For this simulation, we'll just return true.
-    // The "impostor" check is handled on the client as a demo.
-    return {
-      isVerified: true,
-    };
+    // This simulation uses a Genkit prompt to check for the "impostor" keyword.
+    const { output } = await verifyPrompt(input);
+    
+    if (!output) {
+      // Fallback in case the prompt fails
+      return { isVerified: false };
+    }
+
+    return output;
   }
 );
