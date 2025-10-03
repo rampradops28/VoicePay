@@ -88,7 +88,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     const removeRegex = /^(?:remove|delete|cancel|நீக்கு)\s+(.+)$/i;
     const removeMatch = segment.match(removeRegex);
     if (removeMatch) {
-        const itemToRemove = removeMatch[1].trim().split(' ').pop() || '';
+        const itemToRemove = removeMatch[1].trim();
         if (itemToRemove && groceryItems.has(itemToRemove)) {
              parsedCommands.push({
                 action: 'remove',
