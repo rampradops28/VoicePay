@@ -1,11 +1,7 @@
 {
   "name": "Tamil VoicePay",
   "short_name": "VoicePay",
-  "description": "Offline-capable Voice Billing application",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#E8F8EF",
-  "theme_color": "#50C878",
+  "description": "Offline-capable Voice Billing application for small grocery shops.",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -47,5 +43,9 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#E8F8EF",
+  "background_color": "#E8F8EF"
 }
