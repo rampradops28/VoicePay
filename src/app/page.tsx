@@ -83,9 +83,9 @@ export default function BillingPage() {
     <>
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow container mx-auto p-2 sm:p-4 md:p-6 lg:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-8">
-            <div className="md:col-span-2 space-y-4 md:space-y-8">
+        <main className="flex-grow container mx-auto p-4 sm:p-6 md:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8">
+            <div className="md:col-span-2 space-y-6 md:space-y-8">
               <VoiceInput />
             </div>
             <div className="md:col-span-3">

@@ -100,7 +100,7 @@ export default function HistoryPage() {
     <>
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow container mx-auto p-2 sm:p-4 md:p-6 lg:p-8">
+      <main className="flex-grow container mx-auto p-4 sm:p-6 md:p-8">
         <Tabs defaultValue="history">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="history">Billing History</TabsTrigger>
