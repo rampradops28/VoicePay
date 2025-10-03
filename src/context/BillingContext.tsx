@@ -286,11 +286,11 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const removeItem = (itemName: string) => {
     if (!itemName) return;
     
-    // Find the item in the current state, case-insensitively.
+    // Find the exact item in the current bill, case-insensitively.
     const itemToRemove = state.items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
 
     if (itemToRemove) {
-      // Dispatch the action with the *exact* name from the bill.
+      // Dispatch the action with the *exact* name from the bill to ensure a perfect match.
       dispatch({ type: 'REMOVE_ITEM', payload: itemToRemove.name });
       toast({
         title: 'Item Removed',
