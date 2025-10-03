@@ -104,8 +104,10 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, items: newItems, totalAmount: newTotal };
     }
     case 'REMOVE_ITEM': {
-      // The payload is now the exact, case-sensitive name of the item to remove.
-      const newItems = state.items.filter(item => item.name !== action.payload);
+      const itemNameToRemoveLower = action.payload.toLowerCase().trim();
+      const newItems = state.items.filter(
+        (item) => item.name.toLowerCase() !== itemNameToRemoveLower
+      );
       const newTotal = newItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
       return { ...state, items: newItems, totalAmount: newTotal };
     }
@@ -286,12 +288,13 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const removeItem = (itemName: string) => {
     if (!itemName) return;
     
-    // Find the exact item in the current bill, case-insensitively.
-    const itemToRemove = state.items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+    const trimmedItemName = itemName.trim().toLowerCase();
+    const itemToRemove = state.items.find(
+      (item) => item.name.toLowerCase() === trimmedItemName
+    );
 
     if (itemToRemove) {
-      // Dispatch the action with the *exact* name from the bill to ensure a perfect match.
-      dispatch({ type: 'REMOVE_ITEM', payload: itemToRemove.name });
+      dispatch({ type: 'REMOVE_ITEM', payload: trimmedItemName });
       toast({
         title: 'Item Removed',
         description: `${itemToRemove.name} has been removed from the bill.`,
