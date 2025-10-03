@@ -24,34 +24,34 @@ const normalizeUnit = (unit: string): string => {
 export const parseCommand = (command: string): ParsedCommand | null => {
   const cmd = command.toLowerCase().trim();
 
-  // Rule: "add <item> <quantity><unit> <price>rs" or "add <item> <quantity> <unit> <price>"
-  const addRegex = /^add\s+(.+?)\s+(\d+(\.\d+)?)\s*(kg|kilo|kilogram|kilograms|pcs|piece|pieces|g|gram|grams|ltr|litre|liters)\s+(\d+(\.\d+)?)\s*r?s?$/i;
+  // Flexible Rule: "add <item> <quantity><unit> <price>rs" OR "add <quantity><unit> <item> <price>rs"
+  const addRegex = /^add\s+(?:(.+?)\s+(\d+(\.\d+)?)\s*(kg|kilo|kilogram|kilograms|pcs|piece|pieces|g|gram|grams|ltr|litre|liters)\s+(\d+(\.\d+)?)\s*r?s?|(\d+(\.\d+)?)\s*(kg|kilo|kilogram|kilograms|pcs|piece|pieces|g|gram|grams|ltr|litre|liters)\s+(.+?)\s+(\d+(\.\d+)?)\s*r?s?)$/i;
   const addMatch = cmd.match(addRegex);
   if (addMatch) {
-    return {
-      action: 'add',
-      payload: {
-        item: addMatch[1].trim(),
-        quantity: parseFloat(addMatch[2]),
-        unit: normalizeUnit(addMatch[4]),
-        price: parseFloat(addMatch[5]),
-      },
-    };
-  }
-
-  // Legacy Rule: "add <quantity> <unit> <item> for <price>"
-  const addLegacyRegex = /^add\s+(\d+(\.\d+)?)\s+(kg|kilo|kilogram|pcs|piece|pieces|g|gram|grams|ltr|litre|liter)\s+(.+?)\s+for\s+(\d+(\.\d+)?)$/i;
-  const addLegacyMatch = cmd.match(addLegacyRegex);
-  if (addLegacyMatch) {
-    return {
-      action: 'add',
-      payload: {
-        quantity: parseFloat(addLegacyMatch[1]),
-        unit: normalizeUnit(addLegacyMatch[3]),
-        item: addLegacyMatch[4].trim(),
-        price: parseFloat(addLegacyMatch[5]),
-      },
-    };
+    // Check which capture group matched for item/quantity order
+    if (addMatch[1] !== undefined) {
+      // Order: item, quantity, unit, price
+      return {
+        action: 'add',
+        payload: {
+          item: addMatch[1].trim(),
+          quantity: parseFloat(addMatch[2]),
+          unit: normalizeUnit(addMatch[4]),
+          price: parseFloat(addMatch[5]),
+        },
+      };
+    } else {
+      // Order: quantity, unit, item, price
+      return {
+        action: 'add',
+        payload: {
+          item: addMatch[9].trim(),
+          quantity: parseFloat(addMatch[6]),
+          unit: normalizeUnit(addMatch[8]),
+          price: parseFloat(addMatch[10]),
+        },
+      };
+    }
   }
   
   // Rule: "remove <item>"
@@ -67,12 +67,12 @@ export const parseCommand = (command: string): ParsedCommand | null => {
   }
 
   // Rule: "calculate total" or "kanak"
-  if (cmd === 'calculate total' || cmd === 'kanak') {
+  if (cmd === 'calculate total' || cmd === 'kanak' || cmd === 'total') {
     return { action: 'calculate', payload: null };
   }
 
   // Rule: "reset bill"
-  if (cmd === 'reset bill') {
+  if (cmd === 'reset bill' || cmd === 'reset') {
     return { action: 'reset', payload: null };
   }
 

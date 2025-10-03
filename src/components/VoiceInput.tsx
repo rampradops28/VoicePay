@@ -78,7 +78,6 @@ export default function VoiceInput() {
 
     switch (parsed.action) {
         case 'add':
-            // The parser now provides item, quantity, unit, and price
             addItem({
                 name: parsed.payload.item,
                 quantity: parsed.payload.quantity,
@@ -112,27 +111,35 @@ export default function VoiceInput() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false; // Stop after first result
-      recognition.lang = 'en-IN'; // Set to Indian English for better accuracy
-      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.lang = 'en-IN';
+      recognition.interimResults = true;
 
       recognition.onstart = () => setIsRecording(true);
       recognition.onend = () => setIsRecording(false);
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
-        toast({ variant: 'destructive', title: 'Voice Error', description: event.error === 'no-speech' ? 'No speech detected.' : event.error });
+        if (event.error !== 'aborted') {
+          toast({ variant: 'destructive', title: 'Voice Error', description: event.error === 'no-speech' ? 'No speech detected.' : event.error });
+        }
         setIsRecording(false);
       };
+      
+      let finalTranscript = '';
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setCommand(transcript);
-        processCommand(transcript);
-        setIsRecording(false); // Manually set recording to false
-        recognition.stop(); // Ensure it stops
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        setCommand(finalTranscript + interimTranscript);
       };
       recognitionRef.current = recognition;
     }
-  }, [processCommand, toast]);
+  }, [toast]);
 
   const handleMicClick = () => {
     if (!recognitionRef.current) {
@@ -142,6 +149,10 @@ export default function VoiceInput() {
     if (isRecording) {
       recognitionRef.current.stop();
       setIsRecording(false);
+      // Process the final command after stopping
+      if(command.trim()){
+        processCommand(command);
+      }
     } else {
       recognitionRef.current.start();
       setIsRecording(true);
@@ -157,7 +168,7 @@ export default function VoiceInput() {
           Voice Command
         </CardTitle>
         <CardDescription>
-          Use your voice or type to manage the bill. Tap the mic to start/stop.
+          Tap the mic to start/stop recording. Speak your command.
         </CardDescription>
       </CardHeader>
       <CardContent>
