@@ -9,12 +9,23 @@ export default function InstallPWA() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
+      // Prevent the default mini-infobar
       e.preventDefault();
       // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Only show the banner if the app isn't already installed
+      // Show the install banner if not already installed
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setShowBanner(true);
       }
@@ -31,17 +42,6 @@ export default function InstallPWA() {
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
-
-    // Register the service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
-      });
-    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -80,7 +80,7 @@ export default function InstallPWA() {
            </div>
            <div>
             <h3 className="font-semibold font-headline">Install Tamil VoicePay</h3>
-            <p className="text-sm text-muted-foreground">Add to your home screen for a better experience.</p>
+            <p className="text-sm text-muted-foreground">Add to home screen for an offline experience.</p>
            </div>
         </div>
         <div className='flex items-center gap-2'>
