@@ -15,19 +15,25 @@ import { Label } from '@/components/ui/label';
 
 export default function BillingPage() {
   const router = useRouter();
-  const { shopName, resetBill, items, totalAmount, saveBill } = useBilling();
+  const { shopName, resetBill, items, totalAmount, saveBill, isLoading } = useBilling();
   const { toast } = useToast();
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-    setIsAuthenticated(authStatus);
-    if (!authStatus) {
-      router.push('/login');
+    if (!isLoading) {
+      const authStatus = localStorage.getItem('isAuthenticated') === 'true';
+      setIsAuthenticated(authStatus);
+      if (!authStatus) {
+        router.push('/login');
+      } else if (!shopName) {
+        // If authenticated but shopName is not set (e.g. cleared storage manually)
+        // redirect to login to re-establish shopName
+        router.push('/login');
+      }
     }
-  }, [router]);
+  }, [isLoading, router, shopName]);
 
   const handleSendSmsClick = () => {
     if (items.length === 0) {
@@ -68,7 +74,7 @@ export default function BillingPage() {
     window.location.href = smsUri;
   };
 
-  if (!isAuthenticated || !shopName) {
+  if (isLoading || !isAuthenticated || !shopName) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>

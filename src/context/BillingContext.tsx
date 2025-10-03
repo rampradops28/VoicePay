@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useReducer, ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, ReactNode, useEffect, useCallback, useState } from 'react';
 import { BillItem, Bill } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -128,6 +128,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
 };
 
 interface BillingContextType extends BillingState {
+  isLoading: boolean;
   setShopName: (name: string) => void;
   addItem: (item: Omit<BillItem, 'id' | 'lineTotal'>) => void;
   removeItem: (itemName: string) => void;
@@ -141,6 +142,7 @@ const BillingContext = createContext<BillingContextType | undefined>(undefined);
 export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(billingReducer, initialState);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     try {
@@ -150,20 +152,24 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Failed to load state from localStorage', error);
+    } finally {
+        setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    try {
-      const stateToStore = {
-        shopName: state.shopName,
-        history: state.history,
-      };
-      localStorage.setItem('billingState', JSON.stringify(stateToStore));
-    } catch (error) {
-      console.error('Failed to save state to localStorage', error);
+    if (!isLoading) {
+      try {
+        const stateToStore = {
+          shopName: state.shopName,
+          history: state.history,
+        };
+        localStorage.setItem('billingState', JSON.stringify(stateToStore));
+      } catch (error) {
+        console.error('Failed to save state to localStorage', error);
+      }
     }
-  }, [state.shopName, state.history]);
+  }, [state.shopName, state.history, isLoading]);
 
   const setShopName = (name: string) => dispatch({ type: 'SET_SHOP_NAME', payload: name });
   
@@ -237,7 +243,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BillingContext.Provider value={{ ...state, setShopName, addItem, removeItem, resetBill, saveBill, deleteBill }}>
+    <BillingContext.Provider value={{ ...state, isLoading, setShopName, addItem, removeItem, resetBill, saveBill, deleteBill }}>
       {children}
     </BillingContext.Provider>
   );
