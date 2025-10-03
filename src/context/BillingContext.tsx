@@ -17,6 +17,7 @@ type Action =
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'RESET_BILL' }
   | { type: 'SAVE_BILL' }
+  | { type: 'DELETE_BILL'; payload: string }
   | { type: 'HYDRATE_STATE'; payload: Partial<BillingState> }
   | { type: 'CALCULATE_TOTAL' };
 
@@ -65,6 +66,10 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         history: [newBill, ...state.history],
       };
     }
+    case 'DELETE_BILL': {
+      const updatedHistory = state.history.filter(bill => bill.id !== action.payload);
+      return { ...state, history: updatedHistory };
+    }
     case 'HYDRATE_STATE': {
       const hydratedState = { ...initialState, ...action.payload };
       // Clear items on hydration/refresh to prevent carrying over an unfinished bill
@@ -95,6 +100,7 @@ interface BillingContextType extends BillingState {
   removeItem: (itemName: string) => void;
   resetBill: () => void;
   saveBill: () => void;
+  deleteBill: (billId: string) => void;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -181,8 +187,12 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [state.items.length, toast]);
 
+  const deleteBill = (billId: string) => {
+    dispatch({ type: 'DELETE_BILL', payload: billId });
+  };
+
   return (
-    <BillingContext.Provider value={{ ...state, setShopName, addItem, removeItem, resetBill, saveBill }}>
+    <BillingContext.Provider value={{ ...state, setShopName, addItem, removeItem, resetBill, saveBill, deleteBill }}>
       {children}
     </BillingContext.Provider>
   );
