@@ -45,8 +45,9 @@ const normalizeUnit = (unit: string): string => {
   return unitMap[lowerUnit] || lowerUnit;
 };
 
+// This regex now includes a word boundary \b to avoid partially matching words.
 const stripLeadingNoise = (text: string): string => {
-  return text.replace(/^(a|an|add|at|had|remove|delete|cancel|சேர்|நீக்கு)\s+/i, '').trim();
+  return text.replace(/^(a|an|add|at|had|remove|delete|cancel|சேர்|நீக்கு)\b\s+/i, '').trim();
 };
 
 
