@@ -287,23 +287,22 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   const removeItem = (itemName: string) => {
     if (!itemName) return;
-    const itemNameLower = itemName.toLowerCase();
-    const itemExists = state.items.some(i => i.name.toLowerCase() === itemNameLower);
-    
-    if (itemExists) {
-        dispatch({ type: 'REMOVE_ITEM', payload: itemNameLower });
-        toast({
-            title: 'Item Removed',
-            description: `${itemName} has been removed from the bill.`,
-        });
-        speak(`Removed ${itemName}.`);
+    const itemToRemove = state.items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+
+    if (itemToRemove) {
+      dispatch({ type: 'REMOVE_ITEM', payload: itemToRemove.name });
+      toast({
+        title: 'Item Removed',
+        description: `${itemToRemove.name} has been removed from the bill.`,
+      });
+      speak(`Removed ${itemToRemove.name}.`);
     } else {
-        toast({
-            variant: 'destructive',
-            title: 'Item Not Found',
-            description: `Could not find "${itemName}" in the current bill.`,
-        });
-        speak(`Could not find ${itemName}.`);
+      toast({
+        variant: 'destructive',
+        title: 'Item Not Found',
+        description: `Could not find "${itemName}" in the current bill.`,
+      });
+       speak(`Could not find ${itemName}.`);
     }
   };
 
