@@ -11,7 +11,7 @@ import { Download } from 'lucide-react';
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { ownerName, isLoading } = useBilling();
+  const { ownerName, isLoading, setOwnerName } = useBilling();
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
@@ -45,11 +45,10 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('billingState');
-    // This will effectively log the user out by clearing the context state
-    // and then the login page will be shown on next navigation.
-    window.location.href = '/login';
+    // Only clear the owner name, which logs the user out.
+    // This preserves the history in localStorage.
+    setOwnerName(''); 
+    router.push('/login');
   };
 
   const navItems = [

@@ -154,6 +154,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to load state from localStorage on initial render
   useEffect(() => {
+    setIsLoading(true);
     try {
       const storedState = localStorage.getItem('billingState');
       if (storedState) {
@@ -168,7 +169,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to save state to localStorage whenever it changes
   useEffect(() => {
-    // Only save when not loading to avoid writing initial state
+    // Only save when not loading to avoid writing initial state over hydrated state
     if (!isLoading) {
       try {
         const stateToStore = {
@@ -185,7 +186,6 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   const setOwnerName = (name: string) => {
     dispatch({ type: 'SET_OWNER_NAME', payload: name });
-    localStorage.setItem('isAuthenticated', 'true');
   };
   
   const enrollVoice = () => dispatch({ type: 'ENROLL_VOICE' });
