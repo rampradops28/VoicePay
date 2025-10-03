@@ -9,13 +9,13 @@ import { z } from 'genkit';
 import wav from 'wav';
 import { googleAI } from '@genkit-ai/google-genai';
 
-export const TextToSpeechInputSchema = z.string();
-export const TextToSpeechOutputSchema = z.object({
+const TextToSpeechInputSchema = z.string();
+const TextToSpeechOutputSchema = z.object({
   audioDataUri: z.string(),
 });
 
-export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
-export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
+type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
+type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
 
 export async function textToSpeech(
   input: TextToSpeechInput
