@@ -83,7 +83,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
         // Item exists, so we replace it.
         newItems = [...state.items];
         newItems[existingItemIndex] = {
-          ...state.items[existingItemIndex],
+          ...newItems[existingItemIndex],
           quantity,
           unit,
           unitPrice,
@@ -222,7 +222,9 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     if (!state.isSpeechEnabled) return;
     try {
       const { audioDataUri } = await textToSpeech(text);
-      dispatch({ type: 'SET_AUDIO', payload: { src: audioDataUri, id: Date.now() } });
+      if (audioDataUri) {
+        dispatch({ type: 'SET_AUDIO', payload: { src: audioDataUri, id: Date.now() } });
+      }
     } catch (error) {
       console.error("Failed to synthesize speech:", error);
     }
@@ -270,7 +272,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     
     if (existingItem) {
         toast({
-            title: 'Item Replaced',
+            title: 'Item Updated',
             description: `${item.name} has been updated to ${item.quantity}${item.unit} at Rs ${item.unitPrice.toFixed(2)} each.`,
         });
         speak(`Updated ${item.name}.`);
