@@ -50,35 +50,58 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     return { action: 'calculate', payload: null };
   }
 
-  // Flexible Add command regex
-  // add rice 2kg 120rs
+  // Flexible Add command regex: "add <item> <quantity/price> <price/quantity>"
   const addRegex = /^add\s+(.+)/i;
   const addMatch = cmd.match(addRegex);
 
   if (addMatch) {
     let content = addMatch[1];
-
-    const priceRegex = /(\d+(\.\d+)?)\s*(?:rs|rupees)\s*$/i;
-    const priceMatch = content.match(priceRegex);
     let price: number | null = null;
-
-    if (priceMatch) {
-        price = parseFloat(priceMatch[1]);
-        content = content.replace(priceRegex, '').trim();
-    }
-
-    const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?|ml|millilitre|milliliter)\b/i;
-    const qtyUnitMatch = content.match(qtyUnitRegex);
     let quantity: number | null = null;
     let unit: string = '';
 
-    if (qtyUnitMatch) {
-        quantity = parseFloat(qtyUnitMatch[1]);
-        unit = normalizeUnit(qtyUnitMatch[3]);
-        content = content.replace(qtyUnitRegex, '').trim();
+    // Regex for price: (rs 50) or (50 rs) or (50rs)
+    const priceRegex = /(?:rs\s*(\d+(\.\d+)?)|(\d+(\.\d+)?)\s*rs)/i;
+    const priceMatch = content.match(priceRegex);
+
+    if (priceMatch) {
+      price = parseFloat(priceMatch[1] || priceMatch[3]);
+      content = content.replace(priceRegex, '').trim();
     }
+
+    // Regex for quantity and unit: (2 kg) or (2kg)
+    const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?|ml|millilitre|milliliter)\b/i;
+    const qtyUnitMatch = content.match(qtyUnitRegex);
     
-    // If quantity is still not found, check for a number without a unit
+    if (qtyUnitMatch) {
+      quantity = parseFloat(qtyUnitMatch[1]);
+      unit = normalizeUnit(qtyUnitMatch[3]);
+      content = content.replace(qtyUnitRegex, '').trim();
+    }
+
+    // If quantity is still null, look for a number that could be quantity or price
+    // This handles cases where unit is missing, or the order is swapped.
+    const numberRegex = /(\d+(\.\d+)?)/;
+    const numberMatches = content.match(new RegExp(numberRegex, 'g')) || [];
+
+    for (const matchStr of numberMatches) {
+        const numMatch = matchStr.match(numberRegex);
+        if (numMatch) {
+            const num = parseFloat(numMatch[1]);
+            // If we found quantity but not price, maybe this is price
+            if(quantity !== null && price === null) {
+                price = num;
+                content = content.replace(numMatch[0], '').trim();
+            } 
+            // If we found price but not quantity, maybe this is quantity
+            else if (price !== null && quantity === null) {
+                quantity = num;
+                content = content.replace(numMatch[0], '').trim();
+            }
+        }
+    }
+
+    // Fallback: If quantity is still not found, check for a number without a unit
     if (quantity === null) {
       const qtyRegex = /\s(\d+(\.\d+)?)$/i;
       const qtyMatch = content.match(qtyRegex);
@@ -92,18 +115,17 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     const itemName = content.trim();
 
     if (itemName && quantity !== null && price !== null) {
-        return {
-            action: 'add',
-            payload: {
-                item: itemName,
-                quantity: quantity,
-                unit: unit || 'pcs',
-                price: price
-            }
-        };
+      return {
+        action: 'add',
+        payload: {
+          item: itemName,
+          quantity: quantity,
+          unit: unit || 'pcs', // Default to 'pcs' if no unit was parsed
+          price: price,
+        },
+      };
     }
   }
-
 
   return null;
 };
