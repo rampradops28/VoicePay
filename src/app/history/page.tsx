@@ -125,7 +125,7 @@ export default function HistoryPage() {
                         <AccordionTrigger>
                           <div className="flex justify-between w-full pr-4 items-center">
                             <div className="text-left">
-                              <span>Bill from {format(new Date(bill.createdAt), 'PPpp')}</span>
+                              <span>Bill from {format(new Date(bill.createdAt), 'PPP p')}</span>
                             </div>
                             <span className="font-semibold text-primary">₹{(bill.totalAmount || 0).toFixed(2)}</span>
                           </div>

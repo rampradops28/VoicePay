@@ -56,17 +56,19 @@ export default function DailySalesChart() {
   return (
     <ResponsiveContainer width="100%" height={350}>
       <LineChart data={dailySales}>
-        <CartesianGrid strokeDasharray="3 3" />
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         <XAxis 
             dataKey="date" 
             tickFormatter={(str) => format(new Date(str), 'MMM d')}
             axisLine={{ stroke: 'hsl(var(--border))' }}
             tickLine={{ stroke: 'hsl(var(--border))' }}
+            stroke="hsl(var(--muted-foreground))"
         />
         <YAxis 
             axisLine={{ stroke: 'hsl(var(--border))' }}
             tickLine={{ stroke: 'hsl(var(--border))' }}
             tickFormatter={(value) => `₹${value}`}
+            stroke="hsl(var(--muted-foreground))"
         />
         <Tooltip 
           contentStyle={{
@@ -76,7 +78,7 @@ export default function DailySalesChart() {
           formatter={(value: number) => [`₹${value.toFixed(2)}`, 'Sales']} 
           labelFormatter={(label) => format(new Date(label), 'PPP')}
         />
-        <Legend />
+        <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }}/>
         <Line type="monotone" dataKey="sales" stroke="hsl(var(--primary))" name="Total Sales" dot={false} strokeWidth={2} />
       </LineChart>
     </ResponsiveContainer>
