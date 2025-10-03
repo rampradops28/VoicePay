@@ -26,7 +26,7 @@ export const parseCommand = (command: string): ParsedCommand | null => {
   const cmd = command.toLowerCase().trim();
 
   // Rule: "remove <item>"
-  const removeRegex = /^remove\s+(.+)$/i;
+  const removeRegex = /^(?:remove|delete|cancel)\s+(.+)$/i;
   const removeMatch = cmd.match(removeRegex);
   if (removeMatch) {
     return {
@@ -38,7 +38,7 @@ export const parseCommand = (command: string): ParsedCommand | null => {
   }
 
   // Rule: "calculate total" or "kanak" or "total"
-  if (cmd === 'calculate total' || cmd === 'kanak' || cmd === 'total') {
+  if (cmd === 'calculate total' || cmd === 'kanak' || cmd === 'total' || cmd === 'calculate') {
     return { action: 'calculate', payload: null };
   }
 
@@ -48,56 +48,51 @@ export const parseCommand = (command: string): ParsedCommand | null => {
   }
 
   // Flexible "add" command parsing
-  const addRegex = /add\s+(.+)/i;
+  const addRegex = /^(?:add|ad)\s+(.+)/i;
   const addMatch = cmd.match(addRegex);
 
   if (addMatch) {
     let content = addMatch[1];
-    let quantity: number | null = null;
-    let unit: string = '';
+    
+    // 1. Extract price
+    const priceRegex = /(\d+(\.\d+)?)\s*(?:rs|rupees)\b/i;
+    const priceMatch = content.match(priceRegex);
     let price: number | null = null;
-    const itemParts: string[] = [];
+    if (priceMatch) {
+      price = parseFloat(priceMatch[1]);
+      content = content.replace(priceMatch[0], '').trim();
+    }
 
-    // Regex to find quantity and unit (e.g., "2kg", "500g", "2 pcs")
+    // 2. Extract quantity and unit
     const qtyUnitRegex = /(\d+(\.\d+)?)\s*(kg|kilos?|kilograms?|g|grams?|ltr|litres?|liters?|pcs|pieces?)\b/i;
     const qtyUnitMatch = content.match(qtyUnitRegex);
-
+    let quantity: number | null = null;
+    let unit: string = '';
     if (qtyUnitMatch) {
-      quantity = parseFloat(qtyUnitMatch[1]);
-      unit = normalizeUnit(qtyUnitMatch[3]);
-      content = content.replace(qtyUnitMatch[0], '').trim();
+        quantity = parseFloat(qtyUnitMatch[1]);
+        unit = normalizeUnit(qtyUnitMatch[3]);
+        content = content.replace(qtyUnitMatch[0], '').trim();
     }
-    
-    // Regex to find price (e.g., "50rs", "50 rs", "rs 50", "50")
-    const priceRegex = /(?:rs\s*)?(\d+(\.\d+)?)(?:\s*rs)?\b/i;
-    const parts = content.split(/\s+/);
-    let priceFound = false;
 
-    // Iterate backwards to find price first
-    for (let i = parts.length - 1; i >= 0; i--) {
-        const priceMatch = parts[i].match(priceRegex);
-        if (priceMatch && priceMatch[0] === parts[i] && !priceFound) {
-            price = parseFloat(priceMatch[1]);
-            parts.splice(i, 1);
-            priceFound = true;
-            break;
+    // 3. The rest is the item name. Handle numbers that might be quantity or part of the item name.
+    const parts = content.split(/\s+/).filter(Boolean);
+    const itemParts: string[] = [];
+
+    for (const part of parts) {
+        // If quantity is still missing, and we haven't found a price yet, a standalone number is likely the quantity
+        if (quantity === null && /^\d+(\.\d+)?$/.test(part) && price === null) {
+            quantity = parseFloat(part);
+        } 
+        // If price is missing, a standalone number is likely the price
+        else if (price === null && /^\d+(\.\d+)?$/.test(part)) {
+            price = parseFloat(part);
         }
-    }
-    
-    // The rest is the item name and maybe a quantity if not found with unit
-    const remainingContent = parts.join(' ');
-    const words = remainingContent.split(/\s+/).filter(Boolean);
-
-    for (const word of words) {
-        // If quantity is still not found, check for a standalone number
-        if (quantity === null && /^\d+(\.\d+)?$/.test(word)) {
-            quantity = parseFloat(word);
-        } else {
-            itemParts.push(word);
+        else {
+            itemParts.push(part);
         }
     }
 
-    const itemName = itemParts.join(' ');
+    const itemName = itemParts.join(' ').trim();
 
     if (itemName && quantity !== null && price !== null) {
       return {
@@ -105,13 +100,12 @@ export const parseCommand = (command: string): ParsedCommand | null => {
         payload: {
           item: itemName,
           quantity: quantity,
-          unit: unit,
+          unit: unit || 'pcs', // Default to 'pcs' if no unit is specified
           price: price,
         },
       };
     }
   }
-
 
   return null;
 };

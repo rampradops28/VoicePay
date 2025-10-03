@@ -31,7 +31,6 @@ export default function VoiceInput() {
   const { addItem, removeItem, resetBill, saveBill } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
-  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchSuggestions = useCallback(async (partialCommand: string) => {
     if (partialCommand.length < 3) {
@@ -68,6 +67,7 @@ export default function VoiceInput() {
     const commandToProcess = cmd.trim();
     if (!commandToProcess) return;
 
+    console.log(`Processing command: "${commandToProcess}"`);
     const parsed = parseCommand(commandToProcess);
 
     if (!parsed) {
@@ -98,6 +98,7 @@ export default function VoiceInput() {
             saveBill();
             break;
     }
+    // Clear input after processing
     setCommand('');
     setSuggestions([]);
   }, [addItem, removeItem, resetBill, saveBill, toast]);
@@ -114,7 +115,7 @@ export default function VoiceInput() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false; // Process after a single utterance
+      recognition.continuous = true; // Stay on until manually stopped
       recognition.lang = 'en-IN';
       recognition.interimResults = true;
 
@@ -132,24 +133,25 @@ export default function VoiceInput() {
         setIsRecording(false);
       };
       
+      let finalTranscript = '';
       recognition.onresult = (event: any) => {
         let interimTranscript = '';
-        let finalTranscript = '';
+        
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            finalTranscript += event.results[i][0].transcript + ' ';
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
         
-        setCommand(finalTranscript + interimTranscript);
+        setCommand(interimTranscript);
 
-        // If we have a final transcript, process it.
+        // Process final transcripts as they come in
         if (finalTranscript.trim()) {
-           processCommand(finalTranscript.trim());
-           // Stop recognition after a command is processed
-           recognition.stop();
+            const commands = finalTranscript.trim().split(/(?=add|remove|reset|calculate|kanak|total)/i).filter(c => c.trim());
+            commands.forEach(cmd => processCommand(cmd));
+            finalTranscript = ''; // Clear buffer after processing
         }
       };
       recognitionRef.current = recognition;
@@ -165,6 +167,7 @@ export default function VoiceInput() {
       recognitionRef.current.stop();
     } else {
       setCommand(''); // Clear previous command
+      setSuggestions([]);
       recognitionRef.current.start();
     }
   };
@@ -178,7 +181,7 @@ export default function VoiceInput() {
           Voice Command
         </CardTitle>
         <CardDescription>
-          Tap the mic, speak your command, and it will be processed automatically.
+          Tap the mic to start listening. Add multiple items by speaking. Tap the mic again to stop.
         </CardDescription>
       </CardHeader>
       <CardContent>
