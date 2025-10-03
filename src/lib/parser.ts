@@ -25,6 +25,12 @@ const normalizeUnit = (unit: string): string => {
   return unitMap[lowerUnit] || lowerUnit;
 };
 
+// Function to remove leading articles like "a" or "an"
+const stripArticle = (text: string): string => {
+  return text.replace(/^(a|an)\s+/i, '').trim();
+};
+
+
 export const parseCommand = (command: string): ParsedCommand | null => {
   const cmd = command.toLowerCase().trim();
 
@@ -35,7 +41,7 @@ export const parseCommand = (command: string): ParsedCommand | null => {
     return {
       action: 'remove',
       payload: {
-        item: removeMatch[1].trim(),
+        item: stripArticle(removeMatch[1].trim()),
       },
     };
   }
@@ -99,7 +105,8 @@ export const parseCommand = (command: string): ParsedCommand | null => {
       }
     }
     
-    const itemName = content.replace(/\s+/g, ' ').trim();
+    const rawItemName = content.replace(/\s+/g, ' ').trim();
+    const itemName = stripArticle(rawItemName);
 
     if (itemName && quantity !== null && price !== null) {
       return {
