@@ -307,15 +307,13 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetBill = useCallback(() => {
-    if (state.items.length > 0) {
-      dispatch({ type: 'RESET_BILL' });
-      toast({
-          title: 'Bill Cleared',
-          description: 'The current bill has been reset.',
-      });
-      speak('Bill cleared.');
-    }
-  }, [toast, state.items.length, speak]);
+    dispatch({ type: 'RESET_BILL' });
+    toast({
+        title: 'Bill Cleared',
+        description: 'The current bill has been reset.',
+    });
+    speak('Bill cleared.');
+  }, [toast, speak]);
   
   const saveBill = useCallback(() => {
     if (state.items.length > 0) {
