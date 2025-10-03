@@ -14,23 +14,38 @@ export default function InstallPWA() {
       e.preventDefault();
       // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Update UI to notify the user they can install the PWA
-      setShowBanner(true);
+      // Only show the banner if the app isn't already installed
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        setShowBanner(true);
+      }
       console.log('`beforeinstallprompt` event was fired.');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Check if the app is already installed
-    window.addEventListener('appinstalled', () => {
+    const handleAppInstalled = () => {
       // Hide the install promotion
       setShowBanner(false);
       setDeferredPrompt(null);
       console.log('PWA was installed');
-    });
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -52,18 +67,6 @@ export default function InstallPWA() {
     setShowBanner(false);
   };
   
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
-      });
-    }
-  }, []);
-
   if (!showBanner) {
     return null;
   }
