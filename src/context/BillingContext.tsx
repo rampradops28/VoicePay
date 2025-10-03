@@ -105,6 +105,10 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     }
     case 'REMOVE_ITEM': {
       const itemNameToRemoveLower = action.payload.toLowerCase().trim();
+      const itemExists = state.items.some(item => item.name.toLowerCase() === itemNameToRemoveLower);
+      if (!itemExists) {
+        return state; // Do nothing if item doesn't exist
+      }
       const newItems = state.items.filter(
         (item) => item.name.toLowerCase() !== itemNameToRemoveLower
       );
@@ -289,17 +293,16 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     if (!itemName) return;
     
     const trimmedItemName = itemName.trim().toLowerCase();
-    const itemToRemove = state.items.find(
-      (item) => item.name.toLowerCase() === trimmedItemName
-    );
+    // Find the actual item from the state to use its correctly-cased name for the toast message
+    const itemInBill = state.items.find(i => i.name.toLowerCase() === trimmedItemName);
 
-    if (itemToRemove) {
+    if (itemInBill) {
       dispatch({ type: 'REMOVE_ITEM', payload: trimmedItemName });
       toast({
         title: 'Item Removed',
-        description: `${itemToRemove.name} has been removed from the bill.`,
+        description: `${itemInBill.name} has been removed from the bill.`,
       });
-      speak(`Removed ${itemToRemove.name}.`);
+      speak(`Removed ${itemInBill.name}.`);
     } else {
       toast({
         variant: 'destructive',
