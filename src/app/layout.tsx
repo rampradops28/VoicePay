@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { BillingProvider } from '@/context/BillingContext';
 import { cn } from '@/lib/utils';
+import { AppProvider } from '@/context/AppProvider';
 
 export const metadata: Metadata = {
   title: 'Tamil VoicePay',
@@ -23,10 +23,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('font-body antialiased min-h-screen')}>
-        <BillingProvider>
-            {children}
-            <Toaster />
-        </BillingProvider>
+        <AppProvider>
+          {children}
+          <Toaster />
+        </AppProvider>
       </body>
     </html>
   );
