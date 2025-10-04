@@ -49,18 +49,26 @@ const prompt = ai.definePrompt({
   output: {schema: VoiceCommandSuggestionsOutputSchema},
   prompt: `You are a helpful assistant that suggests valid voice commands for a billing application.
 
-  The application supports the following command structures:
+  The application supports the following command structures in English and Tamil:
   - Adding items: "add <item> <quantity><unit> <price>rs" (e.g., "add rice 2kg 120rs")
-  - Removing items: "remove <item>"
+  - Removing items: "remove <item>" (e.g., "remove rice")
   - Calculating total: "calculate total" or "kanak"
   - Resetting bill: "reset bill"
   - Saving the bill: "save bill"
+
+  Here are some Tamil examples:
+  - Adding items: "சேர் அரிசி 2கிலோ 120ரூ" (sēr arisi 2kilo 120rs)
+  - Removing items: "நீக்கு அரிசி" (nīkku arisi)
+  - Calculating total: "மொத்தம்" (mottam) or "kanak"
+  - Resetting bill: "பில்லை அழி" (billai aḻi)
+  - Saving the bill: "பில்லை சேமி" (billai sēmi)
+
 
   Given the following partial command, suggest up to 5 valid commands that the user might want to use.
 
   Partial Command: {{{partialCommand}}}
 
-  Ensure that suggestions are contextually relevant and follow the correct syntax. Return the suggestions as a JSON array of strings.
+  Ensure that suggestions are contextually relevant and follow the correct syntax. If the partial command is in Tamil, prefer Tamil suggestions. Return the suggestions as a JSON array of strings.
   `,
 });
 
