@@ -6,9 +6,8 @@ import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { useBilling } from '@/context/BillingContext';
 import { useState, useEffect } from 'react';
-import { Download, Menu, Settings } from 'lucide-react';
+import { Download, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { SettingsDialog } from './SettingsDialog';
 
 export default function Header() {
   const router = useRouter();
@@ -16,7 +15,6 @@ export default function Header() {
   const { ownerName, isLoading, setOwnerName } = useBilling();
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -57,6 +55,7 @@ export default function Header() {
     { href: '/', label: 'Billing' },
     { href: '/products', label: 'Products'},
     { href: '/history', label: 'History & Analytics' },
+    { href: '/settings', label: 'Settings' },
   ];
 
   if (isLoading || !ownerName) {
@@ -139,10 +138,6 @@ export default function Header() {
               Install
             </Button>
           )}
-           <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
-                <Settings className="h-5 w-5" />
-                <span className="sr-only">Open Settings</span>
-            </Button>
           <span className="hidden sm:inline-block text-sm text-muted-foreground">{ownerName}</span>
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             Logout
@@ -150,7 +145,6 @@ export default function Header() {
         </div>
       </div>
     </header>
-    <SettingsDialog isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </>
   );
 }
