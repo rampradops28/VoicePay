@@ -10,11 +10,13 @@ import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { verifyVoice } from '@/ai/flows/verify-voice';
+import { voiceCommandSuggestions } from '@/ai/flows/voice-command-suggestions';
 
 export default function VoiceInput() {
   const [command, setCommand] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const { addItem, removeItem, resetBill, saveBill, voiceprints, ownerName, language } = useBilling();
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const { addItem, removeItem, resetBill, saveBill, voiceprints, ownerName, language, speak } = useBilling();
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
   const [isOnline, setIsOnline] = useState(true);
@@ -57,6 +59,7 @@ export default function VoiceInput() {
                   title: 'Voice Not Verified',
                   description: 'The command was ignored as the voice did not match.',
                });
+               speak('Voice not recognized.');
                return;
           }
         } catch (error) {
@@ -72,6 +75,7 @@ export default function VoiceInput() {
           title: 'Invalid Command',
           description: `Could not understand "${commandToProcess}". Please try again.`,
         });
+        speak(`Sorry, I didn't understand that.`);
         return;
       }
 
@@ -97,15 +101,16 @@ export default function VoiceInput() {
             saveBill();
             break;
           case 'calculate':
+             // This is now handled by the saveBill flow.
             toast({
               title: 'Action Required',
-              description: 'Please use the "Save Bill" button or command to save the bill.',
+              description: 'Please use the "Save Bill" button or command to finalize and save the bill.',
             });
             break;
         }
       });
     },
-    [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled, ownerName]
+    [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled, ownerName, speak]
   );
 
   const handleSubmit = (e: FormEvent) => {
@@ -115,6 +120,30 @@ export default function VoiceInput() {
     }
   };
   
+  const fetchSuggestions = useCallback(async (partialCommand: string) => {
+    if (!partialCommand.trim() || !isOnline) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const result = await voiceCommandSuggestions({ partialCommand });
+      setSuggestions(result.suggestions || []);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      setSuggestions([]);
+    }
+  }, [isOnline]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchSuggestions(command);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [command, fetchSuggestions]);
+  
   const setupRecognition = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -123,7 +152,7 @@ export default function VoiceInput() {
     }
     
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
+    recognition.continuous = false; // Process after each pause
     recognition.lang = language;
     recognition.interimResults = true;
 
@@ -145,7 +174,6 @@ export default function VoiceInput() {
     
     recognition.onend = () => {
         setIsRecording(false);
-        recognitionRef.current = null;
     };
 
     let finalTranscript = '';
@@ -162,10 +190,11 @@ export default function VoiceInput() {
       const fullTranscript = (finalTranscript || interimTranscript).trim();
       setCommand(fullTranscript);
 
-      if (finalTranscript.trim()) {
-        const audioDataUri = 'data:audio/webm;base64,UklGRgA...';
-        processCommand(finalTranscript.trim(), audioDataUri);
-        finalTranscript = ''; 
+      if (event.results[event.results.length - 1].isFinal) {
+        // This is a rough simulation of getting audio data.
+        // In a real scenario, you'd use the MediaRecorder API to get the actual audio blob.
+        const audioDataUri = 'data:audio/webm;base64,UklGRgA...'; 
+        processCommand(fullTranscript, audioDataUri);
       }
     };
 
@@ -187,13 +216,17 @@ export default function VoiceInput() {
       recognitionRef.current.stop();
     } else {
       try {
+        // Check for mic permission
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // We can stop the tracks immediately as we only needed to ask for permission.
+        // The SpeechRecognition API handles the mic itself.
         stream.getTracks().forEach(track => track.stop());
 
         const recognition = setupRecognition();
         if (recognition) {
           recognitionRef.current = recognition;
           setCommand('');
+          setSuggestions([]);
           recognition.start();
         }
       } catch (err) {
@@ -216,7 +249,7 @@ export default function VoiceInput() {
         </CardTitle>
         <CardDescription>
           {isVoiceEnrolled
-            ? "Tap the mic to start/stop speaking. Voice commands require an internet connection."
+            ? "Tap the mic to start speaking. Voice commands require an internet connection."
             : "Please enroll your voice on the login page to enable this feature."
           }
         </CardDescription>
@@ -240,6 +273,24 @@ export default function VoiceInput() {
             {!isOnline ? <WifiOff /> : <Mic />}
           </Button>
         </form>
+         {suggestions.length > 0 && (
+          <div className="mt-3 space-y-2">
+            <p className="text-xs text-muted-foreground">Suggestions:</p>
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((s, i) => (
+                <Button 
+                  key={i} 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setCommand(s)}
+                >
+                  {s}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
