@@ -4,6 +4,7 @@ import { createContext, useContext, useReducer, ReactNode, useEffect, useCallbac
 import { BillItem, Bill } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { textToSpeech } from '@/ai/flows/text-to-speech';
+import { isToday } from 'date-fns';
 
 type Language = 'en-IN' | 'ta-IN';
 
@@ -135,7 +136,16 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     }
     case 'HYDRATE_STATE': {
       const payload = action.payload;
-      const hydratedHistory = payload.history?.map(bill => ({
+      // Filter history to only include bills from today
+      const dailyHistory = payload.history?.filter(bill => {
+        try {
+          return isToday(new Date(bill.createdAt));
+        } catch (e) {
+          return false;
+        }
+      }) || [];
+
+      const hydratedHistory = dailyHistory.map(bill => ({
         ...bill,
         items: bill.items.map(item => ({
           ...item,
@@ -286,17 +296,17 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeItem = (itemName: string) => {
-    const itemInBill = state.items.find(
+    const itemToRemove = state.items.find(
       (i) => i.name.toLowerCase() === itemName.toLowerCase()
     );
 
-    if (itemInBill) {
-      dispatch({ type: 'REMOVE_ITEM', payload: itemName });
+    if (itemToRemove) {
+      dispatch({ type: 'REMOVE_ITEM', payload: itemToRemove.name });
       toast({
         title: 'Item Removed',
-        description: `${itemInBill.name} has been removed from the bill.`,
+        description: `${itemToRemove.name} has been removed from the bill.`,
       });
-      speak(`Removed ${itemInBill.name}.`);
+      speak(`Removed ${itemToRemove.name}.`);
     } else {
       toast({
         variant: 'destructive',
@@ -368,3 +378,5 @@ export const useBilling = () => {
   }
   return context;
 };
+
+    
