@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useBilling } from '@/context/BillingContext';
@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Bill } from '@/lib/types';
@@ -25,12 +25,17 @@ import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { history, deleteBill, isLoading, ownerName } = useBilling();
+  const { history: fullHistory, deleteBill, isLoading, ownerName } = useBilling();
   const { toast } = useToast();
   
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+
+  // Filter history to show only today's bills
+  const history = useMemo(() => {
+    return fullHistory.filter(bill => isToday(new Date(bill.createdAt)));
+  }, [fullHistory]);
 
   useEffect(() => {
     if (!isLoading && !ownerName) {
@@ -103,19 +108,19 @@ export default function HistoryPage() {
       <main className="flex-grow container mx-auto p-4 sm:p-6 md:p-8">
         <Tabs defaultValue="history">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="history">Billing History</TabsTrigger>
+            <TabsTrigger value="history">Today's Bills</TabsTrigger>
             <TabsTrigger value="analytics">Sales Analytics</TabsTrigger>
           </TabsList>
           <TabsContent value="history">
             <Card>
               <CardHeader>
-                <CardTitle className="font-headline">Billing History</CardTitle>
-                <CardDescription>A record of all your saved bills.</CardDescription>
+                <CardTitle className="font-headline">Today's Billing History</CardTitle>
+                <CardDescription>A record of all your saved bills for today.</CardDescription>
               </CardHeader>
               <CardContent>
                 {history.length === 0 ? (
                   <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No saved bills yet.</p>
+                    <p className="text-muted-foreground">No saved bills yet for today.</p>
                     <p className="text-sm text-muted-foreground">Completed bills will appear here.</p>
                   </div>
                 ) : (
@@ -125,7 +130,7 @@ export default function HistoryPage() {
                         <AccordionTrigger>
                           <div className="flex justify-between w-full pr-4 items-center">
                             <div className="text-left">
-                              <span>Bill from {format(new Date(bill.createdAt), 'PPp')}</span>
+                              <span>Bill from {format(new Date(bill.createdAt), 'p')}</span>
                             </div>
                             <span className="font-semibold text-primary">Rs {(bill.totalAmount || 0).toFixed(2)}</span>
                           </div>

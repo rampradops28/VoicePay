@@ -4,7 +4,6 @@ import { createContext, useContext, useReducer, ReactNode, useEffect, useCallbac
 import { BillItem, Bill } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { textToSpeech } from '@/ai/flows/text-to-speech';
-import { isToday } from 'date-fns';
 
 type Language = 'en-IN' | 'ta-IN';
 
@@ -105,12 +104,12 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, items: newItems, totalAmount: newTotal };
     }
     case 'REMOVE_ITEM': {
-      const itemNameToRemoveLower = action.payload.toLowerCase();
-      const newItems = state.items.filter(
-        (item) => item.name.toLowerCase() !== itemNameToRemoveLower
-      );
-      const newTotal = newItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
-      return { ...state, items: newItems, totalAmount: newTotal };
+        const itemNameToRemoveLower = action.payload.toLowerCase();
+        const newItems = state.items.filter(
+            (item) => item.name.toLowerCase() !== itemNameToRemoveLower
+        );
+        const newTotal = newItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
+        return { ...state, items: newItems, totalAmount: newTotal };
     }
     case 'RESET_BILL':
       return { ...state, items: [], totalAmount: 0 };
@@ -136,16 +135,8 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
     }
     case 'HYDRATE_STATE': {
       const payload = action.payload;
-      // Filter history to only include bills from today
-      const dailyHistory = payload.history?.filter(bill => {
-        try {
-          return isToday(new Date(bill.createdAt));
-        } catch (e) {
-          return false;
-        }
-      }) || [];
-
-      const hydratedHistory = dailyHistory.map(bill => ({
+      
+      const hydratedHistory = payload.history?.map(bill => ({
         ...bill,
         items: bill.items.map(item => ({
           ...item,
@@ -296,8 +287,9 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeItem = (itemName: string) => {
+    const itemNameToRemoveLower = itemName.toLowerCase();
     const itemToRemove = state.items.find(
-      (i) => i.name.toLowerCase() === itemName.toLowerCase()
+      (i) => i.name.toLowerCase() === itemNameToRemoveLower
     );
 
     if (itemToRemove) {
@@ -313,7 +305,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         title: 'Item Not Found',
         description: `Could not find "${itemName}" in the current bill.`,
       });
-      speak(`Could not find ${itemName}.`);
+       speak(`Could not find ${itemName}.`);
     }
   };
 
@@ -378,5 +370,3 @@ export const useBilling = () => {
   }
   return context;
 };
-
-    
