@@ -88,13 +88,18 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     const removeRegex = /^(?:remove|delete|cancel|நீக்கு)\s+(.+)$/i;
     const removeMatch = segment.match(removeRegex);
     if (removeMatch) {
-        const itemToRemove = removeMatch[1].trim();
-        if (itemToRemove && groceryItems.has(itemToRemove)) {
-             parsedCommands.push({
-                action: 'remove',
-                payload: { item: itemToRemove },
-            });
+      const potentialItem = removeMatch[1].trim();
+      const words = potentialItem.split(' ');
+      // Find the last word in the segment that is a valid grocery item
+      for (let i = words.length - 1; i >= 0; i--) {
+        if (groceryItems.has(words[i])) {
+          parsedCommands.push({
+            action: 'remove',
+            payload: { item: words[i] },
+          });
+          break; // Stop after finding the first valid item from the end
         }
+      }
       continue;
     }
 
@@ -134,12 +139,18 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       }
     }
     
-    // The remaining content is the item name. We take the last word as the item.
+    // The remaining content is the item name. We take the last valid grocery word as the item.
     const words = stripLeadingNoise(content.replace(/\s+/g, ' ').trim()).split(' ');
-    const itemName = words.pop() || '';
+    let itemName = '';
+    for (let i = words.length - 1; i >= 0; i--) {
+      if (groceryItems.has(words[i])) {
+        itemName = words[i];
+        break;
+      }
+    }
 
     // Only create an 'add' command if we have all the necessary parts AND the item is valid
-    if (itemName && quantity !== null && price !== null && groceryItems.has(itemName)) {
+    if (itemName && quantity !== null && price !== null) {
       parsedCommands.push({
         action: 'add',
         payload: {

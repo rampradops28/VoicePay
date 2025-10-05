@@ -104,11 +104,7 @@ const billingReducer = (state: BillingState, action: Action): BillingState => {
       return { ...state, items: newItems, totalAmount: newTotal };
     }
     case 'REMOVE_ITEM': {
-      const itemNameToRemoveLower = action.payload.toLowerCase().trim();
-      const itemExists = state.items.some(item => item.name.toLowerCase() === itemNameToRemoveLower);
-      if (!itemExists) {
-        return state; // Do nothing if item doesn't exist
-      }
+      const itemNameToRemoveLower = action.payload.toLowerCase();
       const newItems = state.items.filter(
         (item) => item.name.toLowerCase() !== itemNameToRemoveLower
       );
@@ -244,11 +240,11 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   
   const enrollVoice = (ownerName: string) => {
     if (!ownerName) return;
-    dispatch({ type: 'ENROLL_VOICE', payload: ownerName });
+    dispatch({ type: 'ENROLL_VOICE', payload: ownerName.toLowerCase() });
   };
 
   const removeVoiceprint = (ownerName: string) => {
-    dispatch({ type: 'REMOVE_VOICEPRINT', payload: ownerName });
+    dispatch({ type: 'REMOVE_VOICEPRINT', payload: ownerName.toLowerCase() });
   };
 
   const setLanguage = (language: Language) => {
@@ -290,14 +286,12 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeItem = (itemName: string) => {
-    if (!itemName) return;
-    
-    const trimmedItemName = itemName.trim().toLowerCase();
-    // Find the actual item from the state to use its correctly-cased name for the toast message
-    const itemInBill = state.items.find(i => i.name.toLowerCase() === trimmedItemName);
+    const itemInBill = state.items.find(
+      (i) => i.name.toLowerCase() === itemName.toLowerCase()
+    );
 
     if (itemInBill) {
-      dispatch({ type: 'REMOVE_ITEM', payload: trimmedItemName });
+      dispatch({ type: 'REMOVE_ITEM', payload: itemName });
       toast({
         title: 'Item Removed',
         description: `${itemInBill.name} has been removed from the bill.`,
@@ -309,7 +303,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         title: 'Item Not Found',
         description: `Could not find "${itemName}" in the current bill.`,
       });
-       speak(`Could not find ${itemName}.`);
+      speak(`Could not find ${itemName}.`);
     }
   };
 
