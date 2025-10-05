@@ -1,4 +1,4 @@
-import { groceryItems } from './grocery-data';
+import { groceryItems, groceryNameMapping } from './grocery-data';
 
 export type ParsedCommand =
   | { action: 'add'; payload: { item: string; quantity: number; unit: string; price: number } }
@@ -52,6 +52,10 @@ const stripLeadingNoise = (text: string): string => {
   return text.replace(/^(a|an|add|at|had|and|remove|delete|cancel|சேர்|நீக்கு)\b\s+/i, '').trim();
 };
 
+const getCanonicalItemName = (name: string): string | undefined => {
+    return groceryNameMapping.get(name.toLowerCase());
+};
+
 
 export const parseCommand = (command: string): ParsedCommand[] | null => {
   const tamilConvertedCommand = convertTamilNumbers(command);
@@ -93,11 +97,14 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       // Find the last word in the segment that is a valid grocery item
       for (let i = words.length - 1; i >= 0; i--) {
         if (groceryItems.has(words[i])) {
-          parsedCommands.push({
-            action: 'remove',
-            payload: { item: words[i] },
-          });
-          break; // Stop after finding the first valid item from the end
+          const canonicalName = getCanonicalItemName(words[i]);
+          if (canonicalName) {
+            parsedCommands.push({
+              action: 'remove',
+              payload: { item: canonicalName },
+            });
+            break; 
+          }
         }
       }
       continue;
@@ -141,10 +148,10 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     
     // The remaining content is the item name. We take the last valid grocery word as the item.
     const words = stripLeadingNoise(content.replace(/\s+/g, ' ').trim()).split(' ');
-    let itemName = '';
+    let itemName: string | undefined = '';
     for (let i = words.length - 1; i >= 0; i--) {
       if (groceryItems.has(words[i])) {
-        itemName = words[i];
+        itemName = getCanonicalItemName(words[i]);
         break;
       }
     }

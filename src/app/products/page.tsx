@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import Header from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { groceryCategories } from '@/lib/grocery-data';
+import { groceryCategories, type GroceryItem } from '@/lib/grocery-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -14,21 +14,23 @@ export default function ProductsPage() {
   
   const filteredCategories = useMemo(() => {
     if (!searchTerm) {
-      // Sort items within each category
-      const sortedCategories: { [key: string]: string[] } = {};
+      // Sort items within each category by English name
+      const sortedCategories: { [key: string]: GroceryItem[] } = {};
       for (const category in groceryCategories) {
-        sortedCategories[category] = [...groceryCategories[category]].sort();
+        sortedCategories[category] = [...groceryCategories[category]].sort((a, b) => a.en.localeCompare(b.en));
       }
       return sortedCategories;
     }
 
-    const filtered: { [key: string]: string[] } = {};
+    const filtered: { [key: string]: GroceryItem[] } = {};
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
     for (const category in groceryCategories) {
       const items = groceryCategories[category].filter(item =>
-        item.toLowerCase().includes(searchTerm.toLowerCase())
+        item.en.toLowerCase().includes(lowerCaseSearchTerm) || item.ta.toLowerCase().includes(lowerCaseSearchTerm)
       );
       if (items.length > 0) {
-        filtered[category] = items.sort();
+        filtered[category] = items.sort((a, b) => a.en.localeCompare(b.en));
       }
     }
     return filtered;
@@ -65,8 +67,9 @@ export default function ProductsPage() {
                                     <AccordionContent>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-2">
                                             {filteredCategories[category].map(item => (
-                                                <div key={item} className="p-3 bg-muted/50 rounded-md text-sm capitalize text-center border">
-                                                    {item}
+                                                <div key={item.en} className="p-3 bg-muted/50 rounded-md text-sm text-center border flex flex-col justify-center items-center">
+                                                    <span className="font-medium capitalize">{item.en}</span>
+                                                    <span className="text-muted-foreground">{item.ta}</span>
                                                 </div>
                                             ))}
                                         </div>

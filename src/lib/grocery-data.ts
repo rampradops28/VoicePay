@@ -1,53 +1,100 @@
 
-export const groceryCategories: { [key: string]: string[] } = {
+export interface GroceryItem {
+  en: string;
+  ta: string;
+}
+
+export const groceryCategories: { [key: string]: GroceryItem[] } = {
     "Staples & Grains (தானியங்கள்)": [
-        'rice', 'sugar', 'salt', 'dal', 'lentils', 'wheat', 'flour', 'oil',
-        'ghee', 'milk', 'yogurt', 'curd', 'cheese', 'paneer', 'butter',
-        'tea', 'coffee', 'biscuit', 'bread', 'eggs', 'atta', 'maida', 'sooji', 'rava',
-        'poha', 'jaggery', 'vermicelli', 'pasta', 'noodles', 'oats', 'semolina',
-        'basmati', 'sona masuri', 'idli rice',
-        'arisi', 'sarkarai', 'sakkarai', 'uppu', 'paruppu', 'gothumai', 'maavu', 'ennai',
-        'nei', 'paal', 'thayir', 'vennai', 'semiya', 'godhumai',
-        'vellam', 'karupatti',
+        { en: 'rice', ta: 'அரிசி' },
+        { en: 'sugar', ta: 'சர்க்கரை' },
+        { en: 'salt', ta: 'உப்பு' },
+        { en: 'dal', ta: 'பருப்பு' },
+        { en: 'wheat', ta: 'கோதுமை' },
+        { en: 'flour', ta: 'மாவு' },
+        { en: 'oil', ta: 'எண்ணெய்' },
+        { en: 'ghee', ta: 'நெய்' },
+        { en: 'milk', ta: 'பால்' },
+        { en: 'yogurt', ta: 'தயிர்' },
+        { en: 'tea', ta: 'தேயிலை' },
+        { en: 'coffee', ta: 'காபி' },
+        { en: 'biscuit', ta: 'பிஸ்கட்' },
+        { en: 'bread', ta: 'ரொட்டி' },
+        { en: 'eggs', ta: 'முட்டை' },
+        { en: 'jaggery', ta: 'வெல்லம்' },
     ],
     "Vegetables (காய்கறிகள்)": [
-        'tomato', 'potato', 'onion', 'garlic', 'ginger', 'chilli', 'lemon',
-        'carrot', 'cabbage', 'cauliflower', 'spinach', 'coriander', 'mint',
-        'brinjal', 'eggplant', 'beans', 'peas', 'cucumber', 'capsicum',
-        'beetroot', 'radish', 'ladyfinger', 'okra', 'pumpkin', 'bottle gourd',
-        'ridge gourd', 'snake gourd', 'drumstick', 'broccoli', 'mushroom',
-        'sweet potato', 'corn', 'lettuce', 'celery', 'bell pepper',
-        'thakkali', 'urulaikilangu', 'vengayam', 'poondu', 'inji', 'milagai', 'elumichai',
-        'karattu', 'muttakosu', 'kalipilavar', 'pasalai', 'kothamalli', 'pudhina',
-        'kathirikai', 'keerai', 'avarakkai', 'pattani', 'vellarikkai', 'kodaimilagai',
-        'vendakkai', 'murungakkai', 'peerkangai', 'pudalangai', 'poosanikai',
-        'sakaravalli kizhangu', 'kalan',
+        { en: 'tomato', ta: 'தக்காளி' },
+        { en: 'potato', ta: 'உருளைக்கிழங்கு' },
+        { en: 'onion', ta: 'வெங்காயம்' },
+        { en: 'garlic', ta: 'பூண்டு' },
+        { en: 'ginger', ta: 'இஞ்சி' },
+        { en: 'chilli', ta: 'மிளகாய்' },
+        { en: 'lemon', ta: 'எலுமிச்சை' },
+        { en: 'carrot', ta: 'கேரட்' },
+        { en: 'cabbage', ta: 'முட்டைக்கோஸ்' },
+        { en: 'cauliflower', ta: 'காலிபிளவர்' },
+        { en: 'spinach', ta: 'கீரை' },
+        { en: 'coriander', ta: 'கொத்துமல்லி' },
+        { en: 'mint', ta: 'புதினா' },
+        { en: 'brinjal', ta: 'கத்திரிக்காய்' },
+        { en: 'beans', ta: 'பீன்ஸ்' },
+        { en: 'peas', ta: 'பட்டாணி' },
+        { en: 'cucumber', ta: 'வெள்ளரிக்காய்' },
+        { en: 'capsicum', ta: 'குடைமிளகாய்' },
+        { en: 'beetroot', ta: 'பீட்ரூட்' },
+        { en: 'radish', ta: 'முள்ளங்கி' },
+        { en: 'okra', ta: 'வெண்டைக்காய்' },
+        { en: 'pumpkin', ta: 'பூசணிக்காய்' },
+        { en: 'drumstick', ta: 'முருங்கைக்காய்' },
     ],
     "Fruits (பழங்கள்)": [
-        'apple', 'banana', 'orange', 'mango', 'grapes', 'watermelon', 'pineapple',
-        'papaya', 'guava', 'pomegranate', 'strawberry', 'chickoo', 'sapota',
-        'muskmelon', 'coconut',
-        'appil', 'vazhaipazham', 'aranju', 'mampazham', 'thiratchai', 'tharpoosani',
-        'pappali', 'annasi', 'koyya', 'madhulai', 'thengai',
+        { en: 'apple', ta: 'ஆப்பிள்' },
+        { en: 'banana', ta: 'வாழைப்பழம்' },
+        { en: 'orange', ta: 'ஆரஞ்சு' },
+        { en: 'mango', ta: 'மாம்பழம்' },
+        { en: 'grapes', ta: 'திராட்சை' },
+        { en: 'watermelon', ta: 'தர்பூசணி' },
+        { en: 'pineapple', ta: 'அன்னாசி' },
+        { en: 'papaya', ta: 'பப்பாளி' },
+        { en: 'guava', ta: 'கொய்யா' },
+        { en: 'pomegranate', ta: 'மாதுளை' },
+        { en: 'coconut', ta: 'தேங்காய்' },
     ],
     "Spices & Masalas (மசாலாப் பொருட்கள்)": [
-        'turmeric', 'cumin', 'mustard', 'pepper', 'cardamom', 'cloves', 'cinnamon',
-        'asafoetida', 'fenugreek', 'bay leaf', 'coriander powder', 'chilli powder',
-        'garam masala', 'sambar powder', 'rasam powder', 'fennel',
-        'manjal', 'jeeragam', 'kadugu', 'milagu', 'elakkai', 'kirambu', 'lavangam',
-        'pattai', 'perungayam', 'vendhayam', 'birinji ilai', 'sombu',
+        { en: 'turmeric', ta: 'மஞ்சள்' },
+        { en: 'cumin', ta: 'சீரகம்' },
+        { en: 'mustard', ta: 'கடுகு' },
+        { en: 'pepper', ta: 'மிளகு' },
+        { en: 'cardamom', ta: 'ஏலக்காய்' },
+        { en: 'cloves', ta: 'கிராம்பு' },
+        { en: 'cinnamon', ta: 'இலவங்கப்பட்டை' },
+        { en: 'fennel', ta: 'சோம்பு' },
     ],
     "Meats (இறைச்சி)": [
-        'chicken', 'mutton', 'fish', 'prawns', 'crab',
-        'koli', 'kari', 'meen', 'eral', 'nandu',
+        { en: 'chicken', ta: 'கோழி' },
+        { en: 'mutton', ta: 'ஆட்டிறைச்சி' },
+        { en: 'fish', ta: 'மீன்' },
+        { en: 'prawns', ta: 'இறால்' },
+        { en: 'crab', ta: 'நண்டு' },
     ],
     "Household & Packaged Goods (வீட்டு உபயோகப் பொருட்கள்)": [
-        'soap', 'shampoo', 'toothpaste', 'detergent', 'water', 'soda', 'juice',
-        'chips', 'nuts', 'cashews', 'almonds', 'raisins', 'dates', 'ketchup',
-        'jam', 'pickle', 'honey', 'vinegar',
-        'soppu', 'shampu', 'palpod', 'salavai', 'thanni'
+        { en: 'soap', ta: 'சோப்பு' },
+        { en: 'shampoo', ta: 'ஷாம்பு' },
+        { en: 'toothpaste', ta: 'பற்பசை' },
+        { en: 'detergent', ta: 'சலவைத்தூள்' },
+        { en: 'water', ta: 'தண்ணீர்' },
     ]
 };
 
-// A flat set for quick lookups in the parser
-export const groceryItems = new Set(Object.values(groceryCategories).flat());
+// A flat set of all English and Tamil grocery item names for quick lookups in the parser
+export const groceryItems = new Set(
+  Object.values(groceryCategories).flat().flatMap(item => [item.en.toLowerCase(), item.ta.toLowerCase()])
+);
+
+// A map from any name (English or Tamil) to the canonical English name
+export const groceryNameMapping: Map<string, string> = new Map();
+Object.values(groceryCategories).flat().forEach(item => {
+    groceryNameMapping.set(item.en.toLowerCase(), item.en);
+    groceryNameMapping.set(item.ta.toLowerCase(), item.en);
+});
