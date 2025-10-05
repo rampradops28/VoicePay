@@ -55,6 +55,7 @@ export default function Header() {
 
   const navItems = [
     { href: '/', label: 'Billing' },
+    { href: '/products', label: 'Products'},
     { href: '/history', label: 'History & Analytics' },
   ];
 
