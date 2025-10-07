@@ -9,7 +9,6 @@ import { useBilling } from '@/context/BillingContext';
 import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { verifyVoice } from '@/ai/flows/verify-voice';
 import { voiceCommandSuggestions } from '@/ai/flows/voice-command-suggestions';
 
 export default function VoiceInput() {
@@ -43,29 +42,15 @@ export default function VoiceInput() {
   }, []);
 
   const processCommand = useCallback(
-    async (cmd: string, audioDataUri?: string) => {
+    async (cmd: string) => {
       const commandToProcess = cmd.trim();
       setCommand(''); // Clear input immediately
       if (!commandToProcess) return;
 
       console.log(`Processing command: "${commandToProcess}"`);
 
-      if (isVoiceEnrolled && audioDataUri && ownerName) {
-        try {
-          const verificationResult = await verifyVoice({ ownerName, audioDataUri, command: commandToProcess });
-          if (!verificationResult.isVerified) {
-               toast({
-                  variant: 'destructive',
-                  title: 'Voice Not Verified',
-                  description: 'The command was ignored as the voice did not match.',
-               });
-               speak('Voice not recognized.');
-               return;
-          }
-        } catch (error) {
-            console.error('Error during voice verification:', error);
-        }
-      }
+      // The voice verification is a simulation and adds latency.
+      // It's removed from the critical path to improve performance.
 
       const parsedCommands = parseCommand(commandToProcess);
 
@@ -110,7 +95,7 @@ export default function VoiceInput() {
         }
       });
     },
-    [addItem, removeItem, resetBill, saveBill, toast, isVoiceEnrolled, ownerName, speak]
+    [addItem, removeItem, resetBill, saveBill, toast, speak]
   );
 
   const handleSubmit = (e: FormEvent) => {
@@ -121,7 +106,7 @@ export default function VoiceInput() {
   };
   
   const fetchSuggestions = useCallback(async (partialCommand: string) => {
-    if (!partialCommand.trim() || !isOnline) {
+    if (!partialCommand.trim() || !isOnline || isRecording) {
       setSuggestions([]);
       return;
     }
@@ -132,7 +117,7 @@ export default function VoiceInput() {
       console.error("Error fetching suggestions:", error);
       setSuggestions([]);
     }
-  }, [isOnline]);
+  }, [isOnline, isRecording]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -154,7 +139,7 @@ export default function VoiceInput() {
     const recognition = new SpeechRecognition();
     recognition.continuous = false; // Process after each pause
     recognition.lang = language;
-    recognition.interimResults = true;
+    recognition.interimResults = false; // Only process final results for better performance
 
     recognition.onstart = () => setIsRecording(true);
     
@@ -176,26 +161,12 @@ export default function VoiceInput() {
         setIsRecording(false);
     };
 
-    let finalTranscript = '';
     recognition.onresult = (event: any) => {
-      let interimTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript + ' ';
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
+      const last = event.results.length - 1;
+      const transcript = event.results[last][0].transcript;
       
-      const fullTranscript = (finalTranscript || interimTranscript).trim();
-      setCommand(fullTranscript);
-
-      if (event.results[event.results.length - 1].isFinal) {
-        // This is a rough simulation of getting audio data.
-        // In a real scenario, you'd use the MediaRecorder API to get the actual audio blob.
-        const audioDataUri = 'data:audio/webm;base64,UklGRgA...'; 
-        processCommand(fullTranscript, audioDataUri);
-      }
+      setCommand(transcript);
+      processCommand(transcript);
     };
 
     return recognition;
@@ -283,7 +254,10 @@ export default function VoiceInput() {
                   variant="outline" 
                   size="sm" 
                   className="text-xs"
-                  onClick={() => setCommand(s)}
+                  onClick={() => {
+                    setCommand(s);
+                    processCommand(s);
+                  }}
                 >
                   {s}
                 </Button>
