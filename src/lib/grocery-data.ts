@@ -47,6 +47,7 @@ export const groceryCategories: { [key: string]: GroceryItem[] } = {
         { en: 'okra', ta: 'வெண்டைக்காய்' },
         { en: 'pumpkin', ta: 'பூசணிக்காய்' },
         { en: 'drumstick', ta: 'முருங்கைக்காய்' },
+        { en: 'broccoli', ta: 'பச்சை பூக்கோசு' },
     ],
     "Fruits (பழங்கள்)": [
         { en: 'apple', ta: 'ஆப்பிள்' },
@@ -92,9 +93,19 @@ export const groceryItems = new Set(
   Object.values(groceryCategories).flat().flatMap(item => [item.en.toLowerCase(), item.ta.toLowerCase()])
 );
 
-// A map from any name (English or Tamil) to the canonical English name
+// A map from any name (English, Tamil, or plural) to the canonical English name
 export const groceryNameMapping: Map<string, string> = new Map();
 Object.values(groceryCategories).flat().forEach(item => {
     groceryNameMapping.set(item.en.toLowerCase(), item.en);
     groceryNameMapping.set(item.ta.toLowerCase(), item.en);
 });
+
+// Add common plurals
+groceryNameMapping.set('tomatoes', 'tomato');
+groceryNameMapping.set('potatoes', 'potato');
+groceryNameMapping.set('onions', 'onion');
+groceryNameMapping.set('chillies', 'chilli');
+groceryNameMapping.set('lemons', 'lemon');
+groceryNameMapping.set('carrots', 'carrot');
+groceryNameMapping.set('chickens', 'chicken');
+groceryNameMapping.set('fishes', 'fish');
