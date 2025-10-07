@@ -96,15 +96,13 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       const words = potentialItem.split(' ');
       // Find the last word in the segment that is a valid grocery item
       for (let i = words.length - 1; i >= 0; i--) {
-        if (groceryItems.has(words[i])) {
-          const canonicalName = getCanonicalItemName(words[i]);
-          if (canonicalName) {
-            parsedCommands.push({
-              action: 'remove',
-              payload: { item: canonicalName },
-            });
-            break; 
-          }
+        const canonicalName = getCanonicalItemName(words[i]);
+        if (canonicalName) {
+          parsedCommands.push({
+            action: 'remove',
+            payload: { item: canonicalName },
+          });
+          break; 
         }
       }
       continue;
@@ -150,10 +148,11 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     const words = stripLeadingNoise(content.replace(/\s+/g, ' ').trim()).split(' ');
     let itemName: string | undefined = '';
     for (let i = words.length - 1; i >= 0; i--) {
-      if (groceryItems.has(words[i])) {
-        itemName = getCanonicalItemName(words[i]);
-        break;
-      }
+        const canonicalName = getCanonicalItemName(words[i]);
+        if (canonicalName) {
+            itemName = canonicalName;
+            break;
+        }
     }
 
     // Only create an 'add' command if we have all the necessary parts AND the item is valid
