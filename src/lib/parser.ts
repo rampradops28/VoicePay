@@ -72,17 +72,17 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     if (!segment) continue;
 
     // --- Actions that don't involve items ---
-    if (segment.includes('clear') || segment.includes('reset') || segment.includes('அழி')) {
+    if (segment.match(/\b(clear|reset|billai aḻi|பில்லை அழி)\b/)) {
       parsedCommands.push({ action: 'reset', payload: null });
       continue;
     }
 
-    if (segment.includes('save') || segment.includes('சேமி')) {
+    if (segment.match(/\b(save bill|save|billai sēmi|பில்லை சேமி)\b/)) {
       parsedCommands.push({ action: 'save', payload: null });
       continue;
     }
 
-    if (segment.includes('total') || segment.includes('kanak') || segment.includes('மொத்தம்')) {
+    if (segment.match(/\b(total|calculate|kanak|mottam|மொத்தம்)\b/)) {
       parsedCommands.push({ action: 'calculate', payload: null });
       continue;
     }
@@ -115,8 +115,9 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     let quantity: number | null = null;
     let unit: string = '';
 
-    // Regex to find price (e.g., "50rs", "50 rupees", "at 50", "50 ரூ")
-    const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees|ரூ)|at\s+(\d+(\.\d+)?))/i;
+    // Regex to find price (e.g., "50rs", "50 rupees", "at 50", "50 ரூ", or just "50")
+    // This is now more robust.
+    const priceRegex = /(?:(\d+(\.\d+)?)\s*(?:rs|rupees|ரூ))|(?:at\s+(\d+(\.\d+)?))/i;
     const priceMatch = content.match(priceRegex);
     if (priceMatch) {
       price = parseFloat(priceMatch[1] || priceMatch[3]);
@@ -124,7 +125,7 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
     }
     
     // Regex to find quantity and optional unit (e.g., "2kg", "2 kg", "2")
-    const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)?/i;
+    const qtyUnitRegex = /(\d+(\.\d+)?)\s*([a-zA-Z]+)/i;
     const qtyUnitMatch = content.match(qtyUnitRegex);
     
     if (qtyUnitMatch) {
@@ -135,16 +136,29 @@ export const parseCommand = (command: string): ParsedCommand[] | null => {
       content = content.replace(qtyUnitRegex, '').trim();
     }
     
-    // If price wasn't found with "rs" or "at", check for a trailing number
+    // If price is still null, find the last remaining number and assume it's the price.
+    // This handles cases like "add tomato 2kg 50".
     if (price === null) {
-      const standalonePriceRegex = /(\d+(\.\d+)?)\s*$/;
-      const standalonePriceMatch = content.match(standalonePriceRegex);
-      if(standalonePriceMatch){
-        price = parseFloat(standalonePriceMatch[1]);
-        content = content.replace(standalonePriceRegex, '').trim();
+      const remainingNumbers = content.match(/\d+(\.\d+)?/g);
+      if (remainingNumbers && remainingNumbers.length > 0) {
+        const lastNumber = remainingNumbers[remainingNumbers.length - 1];
+        price = parseFloat(lastNumber);
+        // Remove only the last occurrence of that number
+        const lastIndex = content.lastIndexOf(lastNumber);
+        content = content.substring(0, lastIndex) + content.substring(lastIndex + lastNumber.length);
+        content = content.trim();
       }
     }
     
+    // If quantity is still null, find any remaining number and assume it's quantity.
+    if (quantity === null) {
+        const remainingNumbers = content.match(/\d+(\.\d+)?/g);
+        if (remainingNumbers && remainingNumbers.length > 0) {
+            quantity = parseFloat(remainingNumbers[0]);
+            content = content.replace(remainingNumbers[0], '').trim();
+        }
+    }
+
     // The remaining content is the item name. We take the last valid grocery word as the item.
     const words = stripLeadingNoise(content.replace(/\s+/g, ' ').trim()).split(' ');
     let itemName: string | undefined = '';

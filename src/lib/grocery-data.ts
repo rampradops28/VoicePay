@@ -100,8 +100,9 @@ Object.values(groceryCategories).flat().forEach(item => {
     groceryNameMapping.set(item.ta.toLowerCase(), item.en);
 });
 
-// Add common plurals
+// Add common plurals and alternative names
 groceryNameMapping.set('tomatoes', 'tomato');
+groceryNameMapping.set('thakkali', 'tomato');
 groceryNameMapping.set('potatoes', 'potato');
 groceryNameMapping.set('onions', 'onion');
 groceryNameMapping.set('chillies', 'chilli');
@@ -109,3 +110,4 @@ groceryNameMapping.set('lemons', 'lemon');
 groceryNameMapping.set('carrots', 'carrot');
 groceryNameMapping.set('chickens', 'chicken');
 groceryNameMapping.set('fishes', 'fish');
+
