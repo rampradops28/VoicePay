@@ -5,12 +5,14 @@ import { useState, useCallback, FormEvent, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Mic, WifiOff } from 'lucide-react';
+import { Mic, WifiOff, Info } from 'lucide-react';
 import { useBilling } from '@/context/BillingContext';
 import { parseCommand } from '@/lib/parser';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { voiceCommandSuggestions } from '@/ai/flows/voice-command-suggestions';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 export default function VoiceInput() {
   const [command, setCommand] = useState('');
@@ -173,7 +175,7 @@ export default function VoiceInput() {
 
   const handleMicClick = async () => {
     if (!isOnline) {
-      toast({ variant: 'destructive', title: 'Offline Mode', description: 'Voice commands require an internet connection.' });
+      toast({ variant: 'destructive', title: 'Offline Mode', description: 'Voice commands are disabled while offline.' });
       return;
     }
 
@@ -261,6 +263,45 @@ export default function VoiceInput() {
             </div>
           </div>
         )}
+         <Accordion type="single" collapsible className="w-full mt-4">
+          <AccordionItem value="item-1">
+            <AccordionTrigger>
+                <div className="flex items-center gap-2 text-sm">
+                    <Info className="h-4 w-4" />
+                    View Command Examples
+                </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="text-xs text-muted-foreground space-y-4 pt-2">
+                <p>Structure: `(action) (item) (quantity)(unit) (price)rs`</p>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Add Item:</h4>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><span className="font-semibold">English:</span> `add tomato 2kg 50rs`</li>
+                    <li><span className="font-semibold">Tamil:</span> `சேர் தக்காளி 2கிலோ 50ரூ`</li>
+                    <li><span className="font-semibold">Mixed:</span> `add thakkali 2kg 50rs`</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Remove Item:</h4>
+                   <ul className="list-disc pl-4 space-y-1">
+                    <li><span className="font-semibold">English:</span> `remove tomato`</li>
+                    <li><span className="font-semibold">Tamil:</span> `நீக்கு தக்காளி`</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Other Commands:</h4>
+                   <ul className="list-disc pl-4 space-y-1">
+                    <li><span className="font-semibold">Save Bill:</span> `save bill` or `பில்லை சேமி`</li>
+                    <li><span className="font-semibold">Reset Bill:</span> `reset bill` or `பில்லை அழி`</li>
+                    <li><span className="font-semibold">Calculate Total:</span> `calculate total` or `மொத்தம்`</li>
+                  </ul>
+                </div>
+                <p className="pt-2">You can also chain commands, like: `add tomato 1kg 40rs and add onion 2kg 30rs`</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
