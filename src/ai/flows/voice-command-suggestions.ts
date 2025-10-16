@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -79,6 +80,9 @@ const voiceCommandSuggestionsFlow = ai.defineFlow(
     outputSchema: VoiceCommandSuggestionsOutputSchema,
   },
   async input => {
+    if (!input.partialCommand.trim()) {
+      return { suggestions: [] };
+    }
     const {output} = await prompt(input);
     return output!;
   }

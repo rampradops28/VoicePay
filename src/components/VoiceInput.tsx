@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useCallback, FormEvent, useEffect, useRef } from 'react';
@@ -42,15 +43,12 @@ export default function VoiceInput() {
   }, []);
 
   const processCommand = useCallback(
-    async (cmd: string) => {
+    (cmd: string) => {
       const commandToProcess = cmd.trim();
       setCommand(''); // Clear input immediately
       if (!commandToProcess) return;
 
       console.log(`Processing command: "${commandToProcess}"`);
-
-      // The voice verification is a simulation and adds latency.
-      // It's removed from the critical path to improve performance.
 
       const parsedCommands = parseCommand(commandToProcess);
 
@@ -86,10 +84,10 @@ export default function VoiceInput() {
             saveBill();
             break;
           case 'calculate':
-             // This is now handled by the saveBill flow.
-            toast({
-              title: 'Action Required',
-              description: 'Please use the "Save Bill" button or command to finalize and save the bill.',
+            // This is now handled by the saveBill flow which calculates total.
+             toast({
+              title: 'Total Calculated',
+              description: 'The total is reflected in the current bill. Use "Save Bill" to finalize.',
             });
             break;
         }
@@ -137,11 +135,14 @@ export default function VoiceInput() {
     }
     
     const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Process after each pause
+    recognition.continuous = false;
     recognition.lang = language;
-    recognition.interimResults = false; // Only process final results for better performance
+    recognition.interimResults = false;
 
-    recognition.onstart = () => setIsRecording(true);
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setSuggestions([]); // Clear suggestions when recording starts
+    };
     
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
@@ -149,7 +150,7 @@ export default function VoiceInput() {
         toast({
           variant: 'destructive',
           title: 'Network Error',
-          description: 'Voice recognition requires an internet connection. Please check your connection and try again.',
+          description: 'Voice recognition requires an internet connection.',
         });
       } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
         toast({ variant: 'destructive', title: 'Voice Error', description: `An error occurred: ${event.error}` });
@@ -162,9 +163,7 @@ export default function VoiceInput() {
     };
 
     recognition.onresult = (event: any) => {
-      const last = event.results.length - 1;
-      const transcript = event.results[last][0].transcript;
-      
+      const transcript = event.results[event.results.length - 1][0].transcript;
       setCommand(transcript);
       processCommand(transcript);
     };
@@ -174,7 +173,7 @@ export default function VoiceInput() {
 
   const handleMicClick = async () => {
     if (!isOnline) {
-      toast({ variant: 'destructive', title: 'Offline Mode', description: 'An internet connection is required for voice commands.' });
+      toast({ variant: 'destructive', title: 'Offline Mode', description: 'Voice commands require an internet connection.' });
       return;
     }
 
@@ -187,10 +186,7 @@ export default function VoiceInput() {
       recognitionRef.current.stop();
     } else {
       try {
-        // Check for mic permission
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // We can stop the tracks immediately as we only needed to ask for permission.
-        // The SpeechRecognition API handles the mic itself.
         stream.getTracks().forEach(track => track.stop());
 
         const recognition = setupRecognition();
@@ -205,7 +201,7 @@ export default function VoiceInput() {
         toast({
           variant: "destructive",
           title: "Microphone Access Denied",
-          description: "Voice commands require microphone access. Please enable it in your browser settings."
+          description: "Please enable microphone access in your browser settings."
         });
       }
     }
@@ -220,7 +216,7 @@ export default function VoiceInput() {
         </CardTitle>
         <CardDescription>
           {isVoiceEnrolled
-            ? "Tap the mic to start speaking. Voice commands require an internet connection."
+            ? "Tap the mic and speak a command. Voice commands require an internet connection."
             : "Please enroll your voice on the login page to enable this feature."
           }
         </CardDescription>
