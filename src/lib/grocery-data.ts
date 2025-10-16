@@ -100,14 +100,22 @@ Object.values(groceryCategories).flat().forEach(item => {
     groceryNameMapping.set(item.ta.toLowerCase(), item.en);
 });
 
-// Add common plurals and alternative names
+// Add common plurals and alternative/transliterated names
 groceryNameMapping.set('tomatoes', 'tomato');
 groceryNameMapping.set('thakkali', 'tomato');
 groceryNameMapping.set('potatoes', 'potato');
+groceryNameMapping.set('urulaikilangu', 'potato');
 groceryNameMapping.set('onions', 'onion');
+groceryNameMapping.set('vengayam', 'onion');
 groceryNameMapping.set('chillies', 'chilli');
+groceryNameMapping.set('milagai', 'chilli');
 groceryNameMapping.set('lemons', 'lemon');
-groceryNameMapping.set('carrots', 'carrot');
+groceryNameMapping.set('sakkara', 'sugar');
+groceryNameMapping.set('arisi', 'rice');
+groceryNameMapping.set('paruppu', 'dal');
+groceryNameMapping.set('gothumai', 'wheat');
+groceryNameMapping.set('muttai', 'eggs');
+groceryNameMapping.set('keerai', 'spinach');
+groceryNameMapping.set('poo', 'cauliflower'); // common short name
 groceryNameMapping.set('chickens', 'chicken');
 groceryNameMapping.set('fishes', 'fish');
-
