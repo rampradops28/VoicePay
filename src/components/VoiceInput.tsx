@@ -138,7 +138,10 @@ export default function VoiceInput() {
     
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
-    recognition.lang = language;
+    
+    // Use 'en-IN' for mixed mode as it's better at picking up Tamil names as English words
+    recognition.lang = language === 'mixed' ? 'en-IN' : language;
+    
     recognition.interimResults = false;
 
     recognition.onstart = () => {

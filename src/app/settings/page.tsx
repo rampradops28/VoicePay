@@ -29,19 +29,24 @@ export default function SettingsPage() {
                   <h3 className="font-semibold">Voice Command Language</h3>
                   <RadioGroup 
                       defaultValue={language} 
-                      onValueChange={(value) => setLanguage(value as 'en-IN' | 'ta-IN')}
+                      onValueChange={(value) => setLanguage(value as 'en-IN' | 'ta-IN' | 'mixed')}
+                      className="space-y-2"
                   >
                       <div className="flex items-center space-x-2">
                           <RadioGroupItem value="en-IN" id="lang-en" />
-                          <Label htmlFor="lang-en">English</Label>
+                          <Label htmlFor="lang-en">English Only</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                           <RadioGroupItem value="ta-IN" id="lang-ta" />
-                          <Label htmlFor="lang-ta">Tamil (தமிழ்)</Label>
+                          <Label htmlFor="lang-ta">Tamil Only (தமிழ்)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="mixed" id="lang-mixed" />
+                          <Label htmlFor="lang-mixed">Mixed (English + Tamil)</Label>
                       </div>
                   </RadioGroup>
                   <p className="text-sm text-muted-foreground pt-2">
-                      Select the language you will use for voice commands.
+                      Select the language you will use for voice commands. "Mixed" is best for combining English and Tamil words.
                   </p>
               </div>
               <Separator />

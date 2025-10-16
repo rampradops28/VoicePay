@@ -5,7 +5,7 @@ import { BillItem, Bill } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { textToSpeech } from '@/ai/flows/text-to-speech';
 
-type Language = 'en-IN' | 'ta-IN';
+type Language = 'en-IN' | 'ta-IN' | 'mixed';
 
 interface AudioState {
     src: string;
@@ -250,9 +250,12 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
   const setLanguage = (language: Language) => {
     dispatch({ type: 'SET_LANGUAGE', payload: language });
+    let langDescription = 'English';
+    if (language === 'ta-IN') langDescription = 'Tamil';
+    if (language === 'mixed') langDescription = 'Mixed (English + Tamil)';
     toast({
         title: 'Language Updated',
-        description: `Voice recognition language set to ${language === 'ta-IN' ? 'Tamil' : 'English'}.`,
+        description: `Voice recognition language set to ${langDescription}.`,
     });
   };
 
