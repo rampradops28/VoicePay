@@ -46,6 +46,7 @@ This document provides a technical overview of the algorithms, data structures, 
   1.  **Speech-to-Text**: Utilizes the browser's built-in **Web Speech API (`SpeechRecognition`)**. This is a client-side API that requires an internet connection. The implementation is configured to process only the final, complete transcript to improve performance and reduce lag.
   2.  **Text-to-Speech (TTS)**: Uses a Genkit flow (`textToSpeechFlow`) that calls **Google's Gemini TTS model**.
       - The model generates raw PCM audio data, which is then encoded into a WAV format on the server.
+      
       - The final audio is sent back to the client as a Base64-encoded Data URI, which can be played directly by the browser's `<audio>` element.
 
 ---
